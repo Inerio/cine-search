@@ -1,0 +1,28 @@
+# Environment & Secrets
+.env
+.env.*
+
+# Claude
+.claude/
+
+# Backend
+cine-search-back/target/
+*.class
+*.jar
+
+# Frontend
+cine-search-front/node_modules/
+cine-search-front/dist/
+cine-search-front/.angular/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db

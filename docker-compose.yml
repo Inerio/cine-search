@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      context: ./cine-search-back
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+
+  frontend:
+    build:
+      context: ./cine-search-front
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend

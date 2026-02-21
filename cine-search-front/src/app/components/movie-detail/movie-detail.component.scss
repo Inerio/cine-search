@@ -1,0 +1,262 @@
+.detail-page {
+  position: relative;
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60vh;
+  background-size: cover;
+  background-position: center top;
+  z-index: 0;
+
+  .backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10, 10, 15, 0.5) 0%,
+      rgba(10, 10, 15, 0.85) 60%,
+      rgba(10, 10, 15, 1) 100%
+    );
+  }
+}
+
+.detail-content {
+  position: relative;
+  z-index: 1;
+  padding: 1rem 3rem 4rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+.detail-header {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 3rem;
+
+  .detail-poster {
+    width: 300px;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+  }
+
+  .detail-info {
+    flex: 1;
+    padding-top: 1rem;
+  }
+}
+
+.title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 0.5rem;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.tagline {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.05rem;
+  font-style: italic;
+  margin: 0 0 1.2rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+
+  .rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 600;
+    color: #fff;
+
+    .star {
+      color: #ffd700;
+      font-size: 1.1rem;
+    }
+
+    .vote-count {
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 400;
+      font-size: 0.85rem;
+    }
+  }
+
+  .separator {
+    color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.8rem;
+
+  .genre-tag {
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    background: rgba(229, 9, 20, 0.15);
+    border: 1px solid rgba(229, 9, 20, 0.3);
+    color: #e55a5a;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+}
+
+.synopsis {
+  h3 {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.6rem;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+}
+
+.cast-section {
+  margin-bottom: 2rem;
+
+  h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1.2rem;
+  }
+}
+
+.cast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.cast-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  .cast-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.6rem;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .cast-info {
+    display: flex;
+    flex-direction: column;
+
+    .cast-name {
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .cast-character {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.78rem;
+    }
+  }
+}
+
+.director {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  .director-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+  }
+
+  .director-name {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+// Override global loader for full-page detail loading state
+.loader {
+  padding: 8rem 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+}
+
+@media (max-width: 768px) {
+  .detail-content {
+    padding: 1rem 1.5rem 3rem;
+  }
+
+  .detail-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+
+    .detail-poster {
+      width: 220px;
+    }
+
+    .detail-info {
+      padding-top: 0;
+      text-align: center;
+    }
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .meta {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .genres {
+    justify-content: center;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}

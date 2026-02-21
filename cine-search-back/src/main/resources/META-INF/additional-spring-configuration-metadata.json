@@ -1,0 +1,54 @@
+{
+  "properties": [
+    {
+      "name": "tmdb.api.key",
+      "type": "java.lang.String",
+      "description": "TMDB API key"
+    },
+    {
+      "name": "tmdb.api.base-url",
+      "type": "java.lang.String",
+      "description": "TMDB API base URL"
+    },
+    {
+      "name": "tmdb.api.image-base-url",
+      "type": "java.lang.String",
+      "description": "TMDB image base URL"
+    },
+    {
+      "name": "groq.api.key",
+      "type": "java.lang.String",
+      "description": "Groq API key for LLM calls"
+    },
+    {
+      "name": "groq.api.base-url",
+      "type": "java.lang.String",
+      "description": "Groq API base URL"
+    },
+    {
+      "name": "app.llm.model",
+      "type": "java.lang.String",
+      "description": "LLM model name (e.g. llama-3.3-70b-versatile)"
+    },
+    {
+      "name": "app.llm.temperature",
+      "type": "java.lang.Double",
+      "description": "LLM temperature (0.0 - 2.0)"
+    },
+    {
+      "name": "app.llm.max-tokens",
+      "type": "java.lang.Integer",
+      "description": "LLM max output tokens"
+    },
+    {
+      "name": "app.llm.system-prompt",
+      "type": "java.lang.String",
+      "description": "Override system prompt via ENV (empty = use local file)"
+    },
+    {
+      "name": "cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Comma-separated list of allowed CORS origins"
+    }
+  ]
+}
