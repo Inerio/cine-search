@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
@@ -135,13 +135,23 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
   //  Default content
   // =====================
 
-  /** Loads trending persons (actors from currently trending movies). */
+  /** Loads 4 pages of trending persons in parallel to display 60+ actors. */
   private loadTrendingActors(): void {
-    this.movieService.getTrendingActors().subscribe({
-      next: res => {
-        const actors = res.results
-          .filter(p => p.profile_path && p.known_for_department === 'Acting')
-          .slice(0, 20);
+    forkJoin([
+      this.movieService.getTrendingActors(1),
+      this.movieService.getTrendingActors(2),
+      this.movieService.getTrendingActors(3),
+      this.movieService.getTrendingActors(4),
+    ]).subscribe({
+      next: pages => {
+        const all = pages.flatMap(p => p.results);
+        // Deduplicate by id, keep only actors with a photo
+        const seen = new Set<number>();
+        const actors = all.filter(p => {
+          if (seen.has(p.id) || !p.profile_path || p.known_for_department !== 'Acting') return false;
+          seen.add(p.id);
+          return true;
+        });
         this.defaultActors.set(actors);
       },
       error: () => {}
