@@ -105,16 +105,28 @@ public class TmdbService {
                 .block();
     }
 
+    /** Backward-compatible discover used by AiController. */
     public MovieListResponse discoverMovies(Integer genreId, Integer year, Double minRating, int page) {
-        return discoverMoviesAdvanced(genreId, year, minRating, null, null, page);
+        return discoverMoviesAdvanced(genreId, year, minRating, null, null, null, null, null, null, null, page);
+    }
+
+    /** Backward-compatible overload used by AiController for LLM-driven search. */
+    public MovieListResponse discoverMoviesAdvanced(Integer genreId, Integer year, Double minRating,
+                                                     String originalLanguage, String sortBy, int page) {
+        return discoverMoviesAdvanced(genreId, year, minRating, originalLanguage, sortBy,
+                null, null, null, null, null, page);
     }
 
     /**
-     * Advanced discover endpoint with language and sort support.
-     * Used by AiController for LLM-driven search with filters.
+     * Full discover endpoint with all TMDB filters:
+     * genre, year/decade, rating, language, sort, runtime, and director (crew).
      */
     public MovieListResponse discoverMoviesAdvanced(Integer genreId, Integer year, Double minRating,
-                                                     String originalLanguage, String sortBy, int page) {
+                                                     String originalLanguage, String sortBy,
+                                                     Integer runtimeGte, Integer runtimeLte,
+                                                     Long directorId,
+                                                     String decadeStart, String decadeEnd,
+                                                     int page) {
         return webClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder.path("/discover/movie")
@@ -125,7 +137,11 @@ public class TmdbService {
                     if (genreId != null) {
                         uriBuilder.queryParam("with_genres", genreId);
                     }
-                    if (year != null) {
+                    // Decade date range takes priority over exact year
+                    if (decadeStart != null && decadeEnd != null) {
+                        uriBuilder.queryParam("primary_release_date.gte", decadeStart);
+                        uriBuilder.queryParam("primary_release_date.lte", decadeEnd);
+                    } else if (year != null) {
                         uriBuilder.queryParam("primary_release_year", year);
                     }
                     if (minRating != null) {
@@ -134,6 +150,15 @@ public class TmdbService {
                     }
                     if (originalLanguage != null) {
                         uriBuilder.queryParam("with_original_language", originalLanguage);
+                    }
+                    if (runtimeGte != null) {
+                        uriBuilder.queryParam("with_runtime.gte", runtimeGte);
+                    }
+                    if (runtimeLte != null) {
+                        uriBuilder.queryParam("with_runtime.lte", runtimeLte);
+                    }
+                    if (directorId != null) {
+                        uriBuilder.queryParam("with_crew", directorId);
                     }
                     return uriBuilder.build();
                 })

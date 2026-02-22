@@ -10,10 +10,9 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
   imports: [FormsModule, MovieCardComponent],
   template: `
     <div class="scene-search">
-      <div class="ai-banner">
-        <div class="ai-icon">🤖</div>
-        <h2>Recherche intelligente</h2>
-        <p>Décrivez ce que vous cherchez en langage naturel — l'IA comprendra votre intention.</p>
+      <div class="advanced-banner">
+        <h2>Recherche avancée</h2>
+        <p>Décrivez ce que vous cherchez en langage naturel — les résultats s'adaptent à votre demande.</p>
       </div>
 
       <div class="prompt-area">
@@ -28,28 +27,28 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
         <div class="prompt-footer">
           <span class="hint">Ctrl + Entrée pour rechercher</span>
           <button
-            class="btn-ai"
+            class="btn-search"
             (click)="search()"
             [disabled]="loading() || description().trim().length < 2">
             @if (loading()) {
               <span class="spinner-small"></span>
               Analyse en cours...
             } @else {
-              ✨ Trouver des films
+              Rechercher
             }
           </button>
         </div>
       </div>
 
       @if (loading()) {
-        <div class="ai-loading">
+        <div class="search-loading">
           <div class="pulse-ring"></div>
-          <p>L'IA analyse votre demande...</p>
+          <p>Analyse en cours...</p>
         </div>
       }
 
       @if (parsedQuery() && !loading()) {
-        <div class="ai-parsed">
+        <div class="parsed-results">
           <span class="parsed-badge">{{ intentLabel(parsedQuery()!.intent) }}</span>
           @if (parsedQuery()!.genres && parsedQuery()!.genres!.length > 0) {
             @for (genre of parsedQuery()!.genres!; track genre) {
@@ -78,11 +77,10 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
 
       @if (!loading() && searched() && results().length === 0) {
         <div class="empty-state">
-          <span class="empty-icon">🎬</span>
           @if (parsedQuery()?.intent === 'unknown') {
             <p>Votre demande ne semble pas liée au cinéma. Essayez autre chose !</p>
           } @else {
-            <p>L'IA a compris votre demande mais n'a pas trouvé de correspondance exacte.<br>
+            <p>Aucune correspondance exacte trouvée.<br>
             Essayez avec le nom d'un acteur, un titre partiel ou plus de détails !</p>
           }
         </div>
@@ -130,10 +128,10 @@ export class SceneSearchComponent {
 
   intentLabel(intent: string): string {
     switch (intent) {
-      case 'search': return '🔍 Recherche';
-      case 'recommend': return '💡 Recommandation';
-      case 'details': return '📋 Détails';
-      case 'unknown': return '❓ Non reconnu';
+      case 'search': return 'Recherche';
+      case 'recommend': return 'Recommandation';
+      case 'details': return 'Détails';
+      case 'unknown': return 'Non reconnu';
       default: return intent;
     }
   }

@@ -15,11 +15,12 @@ import { Router } from '@angular/router';
       <div class="hero-content">
         <h1 class="hero-title">Découvrez le cinéma autrement</h1>
         <p class="hero-subtitle">
-          Recherchez par titre, acteur, ou décrivez une scène — notre IA trouve le film parfait.
+          Recherchez par titre, acteur, ou décrivez une scène pour trouver le film parfait.
         </p>
-        <button class="hero-cta" (click)="goToSceneSearch()">
-          ✨ Recherche par scène
-        </button>
+        <div class="hero-actions">
+          <button class="hero-cta" (click)="goToExplore()">Explorer les films</button>
+          <button class="hero-cta-secondary" (click)="goToSceneSearch()">Recherche avancée</button>
+        </div>
       </div>
     </section>
 
@@ -70,6 +71,10 @@ export class HomeComponent implements OnInit {
     this.movieService.getPopular().subscribe(res => {
       this.popularMovies.set(res.results.slice(0, 12));
     });
+  }
+
+  goToExplore(): void {
+    this.router.navigate(['/search']);
   }
 
   goToSceneSearch(): void {

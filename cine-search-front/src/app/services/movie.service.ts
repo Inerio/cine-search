@@ -43,12 +43,26 @@ export class MovieService {
     genreId?: number;
     year?: number;
     minRating?: number;
+    language?: string;
+    sortBy?: string;
+    runtimeGte?: number;
+    runtimeLte?: number;
+    directorId?: number;
+    decadeStart?: string;
+    decadeEnd?: string;
     page?: number;
   }): Observable<MovieListResponse> {
     let params = new HttpParams().set('page', filters.page ?? 1);
     if (filters.genreId) params = params.set('genreId', filters.genreId);
     if (filters.year) params = params.set('year', filters.year);
     if (filters.minRating) params = params.set('minRating', filters.minRating);
+    if (filters.language) params = params.set('language', filters.language);
+    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters.runtimeGte) params = params.set('runtimeGte', filters.runtimeGte);
+    if (filters.runtimeLte) params = params.set('runtimeLte', filters.runtimeLte);
+    if (filters.directorId) params = params.set('directorId', filters.directorId);
+    if (filters.decadeStart) params = params.set('decadeStart', filters.decadeStart);
+    if (filters.decadeEnd) params = params.set('decadeEnd', filters.decadeEnd);
     return this.http.get<MovieListResponse>(`${this.apiUrl}/movies/discover`, { params });
   }
 

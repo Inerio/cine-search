@@ -47,8 +47,18 @@ public class MovieController {
             @RequestParam(required = false) Integer genreId,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) Integer runtimeGte,
+            @RequestParam(required = false) Integer runtimeLte,
+            @RequestParam(required = false) Long directorId,
+            @RequestParam(required = false) String decadeStart,
+            @RequestParam(required = false) String decadeEnd,
             @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.discoverMovies(genreId, year, minRating, page));
+        return ResponseEntity.ok(tmdbService.discoverMoviesAdvanced(
+                genreId, year, minRating, language, sortBy,
+                runtimeGte, runtimeLte, directorId,
+                decadeStart, decadeEnd, page));
     }
 
     @GetMapping("/genres")

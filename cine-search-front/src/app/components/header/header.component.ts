@@ -9,7 +9,6 @@ import { FormsModule } from '@angular/forms';
   template: `
     <header class="header">
       <a routerLink="/" class="logo">
-        <span class="logo-icon">🎬</span>
         <span class="logo-text">Cine<span class="accent">Search</span></span>
       </a>
 
@@ -31,8 +30,9 @@ import { FormsModule } from '@angular/forms';
 
       <nav class="nav-links">
         <a routerLink="/" class="nav-link">Accueil</a>
-        <a routerLink="/search" [queryParams]="{ tab: 'scene' }" class="nav-link ai-link">
-          ✨ Recherche IA
+        <a routerLink="/search" class="nav-link">Explorer</a>
+        <a routerLink="/search" [queryParams]="{ tab: 'scene' }" class="nav-link">
+          Recherche avancée
         </a>
       </nav>
     </header>

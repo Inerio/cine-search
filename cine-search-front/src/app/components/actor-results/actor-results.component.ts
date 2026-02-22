@@ -69,7 +69,6 @@ import { Movie, Person } from '../../models/movie.model';
 
       @if (!loading() && searched() && actors().length === 0) {
         <div class="empty-state">
-          <span class="empty-icon">🎭</span>
           <p>Aucun acteur trouvé</p>
         </div>
       }
