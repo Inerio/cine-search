@@ -11,6 +11,38 @@
   }
 }
 
+.btn-trending {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  svg {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.15);
+
+    svg {
+      opacity: 1;
+    }
+  }
+}
+
 // Opacity fade during loading — prevents layout jump
 .results-area {
   transition: opacity 0.2s ease;

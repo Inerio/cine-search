@@ -23,6 +23,12 @@ public class PersonController {
         return ResponseEntity.ok(tmdbService.getPopularPersons(page));
     }
 
+    @GetMapping("/trending")
+    public ResponseEntity<PersonSearchResponse> getTrendingPersons(
+            @RequestParam(defaultValue = "1") int page) {
+        return ResponseEntity.ok(tmdbService.getTrendingPersons(page));
+    }
+
     @GetMapping("/search")
     public ResponseEntity<PersonSearchResponse> searchPersons(
             @RequestParam String query,

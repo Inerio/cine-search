@@ -81,6 +81,13 @@ export class MovieService {
     });
   }
 
+  /** Returns currently trending persons (actors appearing in trending movies this week). */
+  getTrendingActors(page = 1): Observable<PersonSearchResponse> {
+    return this.http.get<PersonSearchResponse>(`${this.apiUrl}/persons/trending`, {
+      params: new HttpParams().set('page', page)
+    });
+  }
+
   searchPersons(query: string, page = 1): Observable<PersonSearchResponse> {
     return this.http.get<PersonSearchResponse>(`${this.apiUrl}/persons/search`, {
       params: new HttpParams().set('query', query).set('page', page)

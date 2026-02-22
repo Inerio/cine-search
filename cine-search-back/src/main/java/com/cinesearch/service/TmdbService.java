@@ -94,6 +94,21 @@ public class TmdbService {
                 .block();
     }
 
+    /** Returns currently trending persons (actors in trending movies this week). */
+    @Cacheable(value = "trendingPersons", key = "#page")
+    public PersonSearchResponse getTrendingPersons(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/trending/person/week")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "fr-FR")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(PersonSearchResponse.class)
+                .block();
+    }
+
     /** Searches persons by name on TMDB. */
     public PersonSearchResponse searchPersons(String query, int page) {
         return webClient.get()

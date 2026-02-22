@@ -21,9 +21,15 @@ import { Movie, Person } from '../../models/movie.model';
           placeholder="Rechercher un acteur..."
           class="input search-input"
         />
+        <button class="btn-trending" (click)="showTrending()" title="Tendances du moment">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Tendances
+        </button>
       </div>
 
-      <!-- Actor grid: keeps previous results visible during loading (opacity fade) -->
+      <!-- Results area: opacity fade during loading to prevent layout jump -->
       <div class="results-area" [class.is-loading]="loading()">
 
         @if (selectedActor()) {
@@ -68,7 +74,7 @@ import { Movie, Person } from '../../models/movie.model';
 
         @if (!selectedActor() && !searched() && defaultActors().length > 0 && actors().length === 0) {
           <div class="default-section">
-            <h3 class="default-title">Acteurs populaires</h3>
+            <h3 class="default-title">Acteurs du moment</h3>
             <div class="actor-grid">
               @for (actor of defaultActors(); track actor.id) {
                 <div class="actor-card" (click)="selectActor(actor)">
@@ -103,7 +109,7 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
   private movieService = inject(MovieService);
   imageService = inject(ImageService);
 
-  // State
+  // --- State ---
   actorQuery = signal('');
   actors = signal<Person[]>([]);
   defaultActors = signal<Person[]>([]);
@@ -112,12 +118,12 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
   loading = signal(false);
   searched = signal(false);
 
-  // Internal
+  // --- Internal ---
   private searchTimeout: any;
   private activeRequest?: Subscription;
 
   ngOnInit(): void {
-    this.loadPopularActors();
+    this.loadTrendingActors();
   }
 
   ngOnDestroy(): void {
@@ -125,12 +131,16 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
     this.activeRequest?.unsubscribe();
   }
 
-  // Load popular actors as default content
-  private loadPopularActors(): void {
-    this.movieService.getPopularActors().subscribe({
+  // =====================
+  //  Default content
+  // =====================
+
+  /** Loads trending persons (actors from currently trending movies). */
+  private loadTrendingActors(): void {
+    this.movieService.getTrendingActors().subscribe({
       next: res => {
         const actors = res.results
-          .filter(p => p.profile_path)
+          .filter(p => p.profile_path && p.known_for_department === 'Acting')
           .slice(0, 20);
         this.defaultActors.set(actors);
       },
@@ -138,7 +148,25 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Debounced text input handler (400ms)
+  // =====================
+  //  Trending / Reset
+  // =====================
+
+  /** Resets search state and reloads trending actors. */
+  showTrending(): void {
+    this.actorQuery.set('');
+    this.actors.set([]);
+    this.searched.set(false);
+    this.selectedActor.set(null);
+    this.actorMovies.set([]);
+    this.loadTrendingActors();
+  }
+
+  // =====================
+  //  Debounced text search
+  // =====================
+
+  /** Handles text input with 400ms debounce. */
   onQueryInput(value: string): void {
     this.actorQuery.set(value);
     clearTimeout(this.searchTimeout);
@@ -160,7 +188,7 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
     this.searchTimeout = setTimeout(() => this.executeSearch(trimmed), 400);
   }
 
-  // Immediate search on Enter
+  /** Immediate search triggered by Enter key. */
   searchNow(): void {
     clearTimeout(this.searchTimeout);
     const trimmed = this.actorQuery().trim();
@@ -182,7 +210,11 @@ export class ActorResultsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Select an actor and load their filmography
+  // =====================
+  //  Actor selection
+  // =====================
+
+  /** Selects an actor and loads their full filmography. */
   selectActor(actor: Person): void {
     this.selectedActor.set(actor);
     this.loading.set(true);
