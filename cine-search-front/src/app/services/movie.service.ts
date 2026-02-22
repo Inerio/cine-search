@@ -8,14 +8,16 @@ import {
   GenreListResponse,
   PersonSearchResponse,
   PersonCreditsResponse,
-  Movie,
   AiSearchResponse
 } from '../models/movie.model';
 
+/** Central HTTP service for all TMDB and AI endpoints. */
 @Injectable({ providedIn: 'root' })
 export class MovieService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
+
+  // --- Movies ---
 
   getTrending(page = 1): Observable<MovieListResponse> {
     return this.http.get<MovieListResponse>(`${this.apiUrl}/movies/trending`, {
@@ -39,6 +41,7 @@ export class MovieService {
     return this.http.get<MovieDetail>(`${this.apiUrl}/movies/${id}`);
   }
 
+  /** Discover movies with multi-filter support (genre, decade, rating, etc.). */
   discoverMovies(filters: {
     genreId?: number;
     year?: number;
@@ -70,6 +73,14 @@ export class MovieService {
     return this.http.get<GenreListResponse>(`${this.apiUrl}/movies/genres`);
   }
 
+  // --- Persons ---
+
+  getPopularActors(page = 1): Observable<PersonSearchResponse> {
+    return this.http.get<PersonSearchResponse>(`${this.apiUrl}/persons/popular`, {
+      params: new HttpParams().set('page', page)
+    });
+  }
+
   searchPersons(query: string, page = 1): Observable<PersonSearchResponse> {
     return this.http.get<PersonSearchResponse>(`${this.apiUrl}/persons/search`, {
       params: new HttpParams().set('query', query).set('page', page)
@@ -80,10 +91,9 @@ export class MovieService {
     return this.http.get<PersonCreditsResponse>(`${this.apiUrl}/persons/${personId}/movies`);
   }
 
-  /**
-   * AI-powered search: sends free text to backend which calls Groq LLM
-   * for structured extraction, then routes to TMDB.
-   */
+  // --- AI ---
+
+  /** Sends free-text query to backend Groq LLM for structured extraction + TMDB resolution. */
   aiParse(text: string): Observable<AiSearchResponse> {
     return this.http.post<AiSearchResponse>(`${this.apiUrl}/ai/parse`, { text });
   }

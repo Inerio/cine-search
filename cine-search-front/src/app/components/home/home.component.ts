@@ -13,13 +13,13 @@ import { Router } from '@angular/router';
     <section class="hero" [style.background-image]="heroBackdrop()">
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <h1 class="hero-title">Découvrez le cinéma autrement</h1>
+        <h1 class="hero-title">Decouvrez le cinema autrement</h1>
         <p class="hero-subtitle">
-          Recherchez par titre, acteur, ou décrivez une scène pour trouver le film parfait.
+          Recherchez par titre, acteur, ou decrivez une scene pour trouver le film parfait.
         </p>
         <div class="hero-actions">
           <button class="hero-cta" (click)="goToExplore()">Explorer les films</button>
-          <button class="hero-cta-secondary" (click)="goToSceneSearch()">Recherche avancée</button>
+          <button class="hero-cta-secondary" (click)="goToSceneSearch()">Recherche avancee</button>
         </div>
       </div>
     </section>

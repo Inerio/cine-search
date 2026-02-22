@@ -1,3 +1,5 @@
+// --- Movie ---
+
 export interface Movie {
   id: number;
   title: string;
@@ -37,10 +39,18 @@ export interface MovieDetail {
   credits: Credits;
 }
 
+// --- Genre ---
+
 export interface Genre {
   id: number;
   name: string;
 }
+
+export interface GenreListResponse {
+  genres: Genre[];
+}
+
+// --- Credits ---
 
 export interface Credits {
   cast: CastMember[];
@@ -63,9 +73,7 @@ export interface CrewMember {
   profile_path: string | null;
 }
 
-export interface GenreListResponse {
-  genres: Genre[];
-}
+// --- Person ---
 
 export interface Person {
   id: number;
@@ -88,7 +96,7 @@ export interface PersonCreditsResponse {
   cast: Movie[];
 }
 
-// --- AI Parse types ---
+// --- AI Parse ---
 
 export interface AiMovieQuery {
   intent: 'search' | 'recommend' | 'details' | 'unknown';

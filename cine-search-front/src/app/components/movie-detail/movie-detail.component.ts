@@ -17,9 +17,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
         </div>
 
         <div class="detail-content">
-          <button class="back-btn" (click)="goBack()">
-            ← Retour
-          </button>
+          <button class="back-btn" (click)="goBack()">&#8592; Retour</button>
 
           <div class="detail-header">
             <img
@@ -27,24 +25,23 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
               [alt]="m.title"
               class="detail-poster"
             />
-
             <div class="detail-info">
               <h1 class="title">{{ m.title }}</h1>
 
               @if (m.tagline) {
-                <p class="tagline">« {{ m.tagline }} »</p>
+                <p class="tagline">{{ m.tagline }}</p>
               }
 
               <div class="meta">
                 <span class="rating">
-                  <span class="star">★</span>
+                  <span class="star">&#9733;</span>
                   {{ m.vote_average | number:'1.1-1' }}
                   <span class="vote-count">({{ m.vote_count }} votes)</span>
                 </span>
-                <span class="separator">•</span>
+                <span class="separator">&#8226;</span>
                 <span>{{ m.release_date | slice:0:4 }}</span>
                 @if (m.runtime) {
-                  <span class="separator">•</span>
+                  <span class="separator">&#8226;</span>
                   <span>{{ formatRuntime(m.runtime) }}</span>
                 }
               </div>
@@ -86,7 +83,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
 
           @if (director()) {
             <div class="director">
-              <span class="director-label">Réalisé par</span>
+              <span class="director-label">Realise par</span>
               <span class="director-name">{{ director() }}</span>
             </div>
           }
@@ -126,6 +123,7 @@ export class MovieDetailComponent implements OnInit {
     this.location.back();
   }
 
+  /** Converts total minutes to "Xh Ymin" display format. */
   formatRuntime(minutes: number): string {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;

@@ -79,6 +79,22 @@ public class TmdbService {
                 .block();
     }
 
+    /** Returns the current most popular persons from TMDB. */
+    @Cacheable(value = "popularPersons", key = "#page")
+    public PersonSearchResponse getPopularPersons(int page) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/person/popular")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", "fr-FR")
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(PersonSearchResponse.class)
+                .block();
+    }
+
+    /** Searches persons by name on TMDB. */
     public PersonSearchResponse searchPersons(String query, int page) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder

@@ -19,11 +19,11 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
         />
         <div class="overlay">
           <div class="rating">
-            <span class="star">★</span>
+            <span class="star">&#9733;</span>
             {{ movie().vote_average | number:'1.1-1' }}
           </div>
           <p class="overview">{{ movie().overview | slice:0:120 }}{{ movie().overview.length > 120 ? '...' : '' }}</p>
-          <button class="detail-btn">Voir détails</button>
+          <button class="detail-btn">Voir details</button>
         </div>
       </div>
       <div class="info">

@@ -20,7 +20,7 @@ type SearchMode = 'none' | 'text' | 'discover';
       <div class="tabs">
         <button class="tab" [class.active]="activeTab() === 'movie'" (click)="setTab('movie')">Film</button>
         <button class="tab" [class.active]="activeTab() === 'actor'" (click)="setTab('actor')">Acteur</button>
-        <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">Avancée</button>
+        <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">Avancee</button>
       </div>
 
       @if (activeTab() === 'movie') {
@@ -138,7 +138,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             }
           </div>
 
-          <!-- Results area: keeps previous results visible during loading (opacity fade) -->
+          <!-- Results area: opacity fade during loading to prevent layout jump -->
           <div class="results-area" [class.is-loading]="loading()">
 
             @if (hasResults()) {
@@ -206,7 +206,7 @@ export class SearchComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private movieService = inject(MovieService);
 
-  // --- State ---
+  // --- UI state ---
   activeTab = signal<SearchTab>('movie');
   movieQuery = signal('');
   movieResults = signal<Movie[]>([]);
@@ -233,17 +233,17 @@ export class SearchComponent implements OnInit, OnDestroy {
   selectedDirector = signal<Person | null>(null);
   showDirectorDropdown = signal(false);
 
-  // --- Internal ---
+  // --- Internal cleanup handles ---
   private textSearchTimeout: any;
   private directorSearchTimeout: any;
   private activeRequest?: Subscription;
 
-  /** Helper: true when movieResults has items */
+  /** True when movieResults has items. */
   hasResults(): boolean {
     return this.movieResults().length > 0;
   }
 
-  /** Visible page numbers with ellipsis markers (-1) */
+  /** Computes visible page numbers with ellipsis markers (-1). */
   visiblePages(): number[] {
     const total = this.totalPages();
     const current = this.currentPage();
@@ -259,13 +259,16 @@ export class SearchComponent implements OnInit, OnDestroy {
     return pages;
   }
 
-  // ===== Lifecycle =====
+  // =====================
+  //  Lifecycle
+  // =====================
 
   ngOnInit(): void {
     this.movieService.getGenres().subscribe(res => this.genres.set(res.genres));
 
     this.route.queryParams.subscribe(params => {
-      if (params['tab']) this.activeTab.set(params['tab'] as SearchTab);
+      // Always sync tab from URL — defaults to 'movie' when absent
+      this.activeTab.set((params['tab'] as SearchTab) || 'movie');
 
       if (params['q']) {
         this.movieQuery.set(params['q']);
@@ -282,16 +285,20 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.activeRequest?.unsubscribe();
   }
 
-  // ===== Defaults =====
+  // =====================
+  //  Default content
+  // =====================
 
-  loadDefaultMovies(): void {
+  private loadDefaultMovies(): void {
     this.movieService.getTrending().subscribe({
       next: res => this.defaultMovies.set(res.results),
       error: () => {}
     });
   }
 
-  // ===== Tab =====
+  // =====================
+  //  Tab navigation
+  // =====================
 
   setTab(tab: SearchTab): void {
     this.activeTab.set(tab);
@@ -305,15 +312,18 @@ export class SearchComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ===== Text search (debounced) =====
+  // =====================
+  //  Debounced text search
+  // =====================
 
+  /** Handles text input with 400ms debounce. */
   onQueryInput(value: string): void {
     this.movieQuery.set(value);
     clearTimeout(this.textSearchTimeout);
 
     const trimmed = value.trim();
     if (trimmed.length < 2) {
-      // Query cleared or too short: reset to defaults
+      // Query cleared or too short — reset to default view
       if (this.searchMode() === 'text' || !this.searched()) {
         this.searched.set(false);
         this.movieResults.set([]);
@@ -329,7 +339,7 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.textSearchTimeout = setTimeout(() => this.executeTextSearch(1), 400);
   }
 
-  /** Immediate search on Enter (cancels debounce) */
+  /** Immediate search triggered by Enter key. */
   searchNow(): void {
     clearTimeout(this.textSearchTimeout);
     const trimmed = this.movieQuery().trim();
@@ -357,8 +367,11 @@ export class SearchComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ===== Filters (instant apply) =====
+  // =====================
+  //  Filters (auto-apply)
+  // =====================
 
+  /** Updates a single filter and triggers a discover request. */
   onFilterChange(filter: string, value: any): void {
     switch (filter) {
       case 'genre': this.selectedGenre.set(value); break;
@@ -372,6 +385,7 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.executeDiscover(1);
   }
 
+  /** Builds TMDB discover params from current filter state. */
   private buildDiscoverParams(page: number) {
     const runtime = this.selectedRuntime();
     let runtimeGte: number | undefined;
@@ -421,7 +435,9 @@ export class SearchComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ===== Pagination =====
+  // =====================
+  //  Pagination
+  // =====================
 
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
@@ -430,12 +446,15 @@ export class SearchComponent implements OnInit, OnDestroy {
     else this.executeDiscover(page);
   }
 
-  // ===== Trending / Reset =====
+  // =====================
+  //  Trending / Reset
+  // =====================
 
   showTrending(): void {
     this.resetFilters();
   }
 
+  /** Clears all filters, query, and reloads trending movies. */
   resetFilters(): void {
     this.selectedGenre.set(null);
     this.selectedRating.set(null);
@@ -454,8 +473,11 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.loadDefaultMovies();
   }
 
-  // ===== Director autocomplete =====
+  // =====================
+  //  Director autocomplete
+  // =====================
 
+  /** Debounced director search (300ms). */
   onDirectorInput(value: string): void {
     this.directorQuery.set(value);
     if (this.selectedDirector()) this.selectedDirector.set(null);
