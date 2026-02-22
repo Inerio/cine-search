@@ -25,14 +25,22 @@ type SearchMode = 'none' | 'text' | 'discover';
 
       @if (activeTab() === 'movie') {
         <div class="search-section">
-          <input
-            type="text"
-            [ngModel]="movieQuery()"
-            (ngModelChange)="onQueryInput($event)"
-            (keyup.enter)="searchNow()"
-            placeholder="Rechercher un film..."
-            class="input search-input"
-          />
+          <div class="search-row">
+            <input
+              type="text"
+              [ngModel]="movieQuery()"
+              (ngModelChange)="onQueryInput($event)"
+              (keyup.enter)="searchNow()"
+              placeholder="Rechercher un film..."
+              class="input search-input"
+            />
+            <button class="btn-trending" (click)="showTrending()" title="Tendances du moment">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Tendances
+            </button>
+          </div>
 
           <div class="filters">
             <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="select">
@@ -422,7 +430,11 @@ export class SearchComponent implements OnInit, OnDestroy {
     else this.executeDiscover(page);
   }
 
-  // ===== Reset =====
+  // ===== Trending / Reset =====
+
+  showTrending(): void {
+    this.resetFilters();
+  }
 
   resetFilters(): void {
     this.selectedGenre.set(null);
