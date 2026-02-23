@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
@@ -10,16 +10,28 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [MovieCardComponent],
   template: `
-    <section class="hero" [style.background-image]="heroBackdrop()">
+    <section class="hero">
+      <!-- Two stacked backdrop layers for smooth crossfade -->
+      <div
+        class="hero-bg"
+        [class.visible]="activeBg() === 0"
+        [style.background-image]="backdrop0()"
+      ></div>
+      <div
+        class="hero-bg"
+        [class.visible]="activeBg() === 1"
+        [style.background-image]="backdrop1()"
+      ></div>
+
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <h1 class="hero-title">Decouvrez le cinema autrement</h1>
+        <h1 class="hero-title">Retrouvez n'importe quel film en quelques secondes</h1>
         <p class="hero-subtitle">
-          Recherchez par titre, acteur, ou decrivez une scene pour trouver le film parfait.
+          Recherchez par titre, acteur, genre ou décrivez simplement une scène — MovieSeeker trouve le film qu'il vous faut.
         </p>
         <div class="hero-actions">
           <button class="hero-cta" (click)="goToExplore()">Explorer les films</button>
-          <button class="hero-cta-secondary" (click)="goToSceneSearch()">Recherche avancee</button>
+          <button class="hero-cta-secondary" (click)="goToSceneSearch()">Recherche avancée</button>
         </div>
       </div>
     </section>
@@ -50,27 +62,86 @@ import { Router } from '@angular/router';
   `,
   styleUrl: './home.component.scss'
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   private movieService = inject(MovieService);
   private imageService = inject(ImageService);
   private router = inject(Router);
 
   trendingMovies = signal<Movie[]>([]);
   popularMovies = signal<Movie[]>([]);
-  heroBackdrop = signal<string>('');
+
+  // --- Backdrop slideshow ---
+  backdrop0 = signal('');
+  backdrop1 = signal('');
+  activeBg = signal<0 | 1>(0);
+
+  private backdropUrls: string[] = [];
+  private currentIndex = 0;
+  private slideshowInterval: any;
+
+  private static readonly SLIDE_DURATION = 8000;
 
   ngOnInit(): void {
     this.movieService.getTrending().subscribe(res => {
-      this.trendingMovies.set(res.results.slice(0, 12));
-      if (res.results.length > 0) {
-        const backdrop = this.imageService.getBackdropUrl(res.results[0].backdrop_path, 'original');
-        this.heroBackdrop.set(`url(${backdrop})`);
-      }
+      this.trendingMovies.set(res.results.slice(0, 20));
+      this.initSlideshow(res.results);
     });
 
     this.movieService.getPopular().subscribe(res => {
-      this.popularMovies.set(res.results.slice(0, 12));
+      this.popularMovies.set(res.results.slice(0, 20));
     });
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.slideshowInterval);
+  }
+
+  /** Shuffles backdrops, sets the first one, and starts the cycle. */
+  private initSlideshow(movies: Movie[]): void {
+    this.backdropUrls = movies
+      .filter(m => m.backdrop_path)
+      .map(m => this.imageService.getBackdropUrl(m.backdrop_path, 'original'));
+
+    if (this.backdropUrls.length === 0) return;
+
+    // Shuffle for a random start order
+    this.shuffle(this.backdropUrls);
+
+    // Set the first backdrop immediately on layer 0
+    this.backdrop0.set(`url(${this.backdropUrls[0]})`);
+    this.activeBg.set(0);
+    this.currentIndex = 0;
+
+    if (this.backdropUrls.length < 2) return;
+
+    // Preload the next image into the hidden layer
+    this.backdrop1.set(`url(${this.backdropUrls[1]})`);
+
+    this.slideshowInterval = setInterval(() => this.nextSlide(), HomeComponent.SLIDE_DURATION);
+  }
+
+  /** Crossfades to the next backdrop image. */
+  private nextSlide(): void {
+    this.currentIndex = (this.currentIndex + 1) % this.backdropUrls.length;
+    const nextIndex = (this.currentIndex + 1) % this.backdropUrls.length;
+
+    if (this.activeBg() === 0) {
+      // Layer 1 already has the next image loaded — fade to it
+      this.activeBg.set(1);
+      // Preload the upcoming image into the now-hidden layer 0
+      setTimeout(() => this.backdrop0.set(`url(${this.backdropUrls[nextIndex]})`), 1500);
+    } else {
+      this.activeBg.set(0);
+      setTimeout(() => this.backdrop1.set(`url(${this.backdropUrls[nextIndex]})`), 1500);
+    }
+  }
+
+  /** Fisher-Yates shuffle. */
+  private shuffle(arr: string[]): void {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
   }
 
   goToExplore(): void {

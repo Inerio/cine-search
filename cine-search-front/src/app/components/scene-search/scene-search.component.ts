@@ -11,8 +11,8 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
   template: `
     <div class="scene-search">
       <div class="advanced-banner">
-        <h2>Recherche avancee</h2>
-        <p>Decrivez ce que vous cherchez en langage naturel — les resultats s'adaptent a votre demande.</p>
+        <h2>Recherche avancée</h2>
+        <p>Décrivez ce que vous cherchez en langage naturel — les résultats s'adaptent à votre demande.</p>
       </div>
 
       <div class="prompt-area">
@@ -20,12 +20,12 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
           [ngModel]="description()"
           (ngModelChange)="description.set($event)"
           (keydown)="onKeydown($event)"
-          placeholder="Ex: Un film de science-fiction sombre comme Interstellar, des comedies francaises recentes, le dernier film avec Tom Hanks..."
+          placeholder="Ex: Un film de science-fiction sombre comme Interstellar, des comédies françaises récentes, le dernier film avec Tom Hanks..."
           class="textarea"
           rows="4"
         ></textarea>
         <div class="prompt-footer">
-          <span class="hint">Ctrl + Entree pour rechercher</span>
+          <span class="hint">Ctrl + Entrée pour rechercher</span>
           <button
             class="btn-search"
             (click)="search()"
@@ -66,7 +66,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
 
       @if (results().length > 0) {
         <div class="results-header">
-          <h3>{{ results().length }} films trouves</h3>
+          <h3>{{ results().length }} films trouvés</h3>
         </div>
         <div class="movie-grid">
           @for (movie of results(); track movie.id) {
@@ -78,10 +78,10 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
       @if (!loading() && searched() && results().length === 0) {
         <div class="empty-state">
           @if (parsedQuery()?.intent === 'unknown') {
-            <p>Votre demande ne semble pas liee au cinema. Essayez autre chose !</p>
+            <p>Votre demande ne semble pas liée au cinéma. Essayez autre chose !</p>
           } @else {
-            <p>Aucune correspondance exacte trouvee.<br>
-            Essayez avec le nom d'un acteur, un titre partiel ou plus de details !</p>
+            <p>Aucune correspondance exacte trouvée.<br>
+            Essayez avec le nom d'un acteur, un titre partiel ou plus de détails !</p>
           }
         </div>
       }
@@ -133,7 +133,7 @@ export class SceneSearchComponent {
     switch (intent) {
       case 'search': return 'Recherche';
       case 'recommend': return 'Recommandation';
-      case 'details': return 'Details';
+      case 'details': return 'Détails';
       case 'unknown': return 'Non reconnu';
       default: return intent;
     }

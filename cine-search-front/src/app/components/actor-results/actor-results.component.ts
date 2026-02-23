@@ -98,7 +98,7 @@ import { Movie, Person } from '../../models/movie.model';
         }
 
         @if (!loading() && searched() && actors().length === 0 && !selectedActor()) {
-          <div class="empty-state"><p>Aucun acteur trouve</p></div>
+          <div class="empty-state"><p>Aucun acteur trouvé</p></div>
         }
       </div>
     </div>

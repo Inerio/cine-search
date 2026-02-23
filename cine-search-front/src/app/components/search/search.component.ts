@@ -20,7 +20,7 @@ type SearchMode = 'none' | 'text' | 'discover';
       <div class="tabs">
         <button class="tab" [class.active]="activeTab() === 'movie'" (click)="setTab('movie')">Film</button>
         <button class="tab" [class.active]="activeTab() === 'actor'" (click)="setTab('actor')">Acteur</button>
-        <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">Avancee</button>
+        <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">Avancée</button>
       </div>
 
       @if (activeTab() === 'movie') {
@@ -51,7 +51,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             </select>
 
             <select [ngModel]="selectedDecade()" (ngModelChange)="onFilterChange('decade', $event)" class="select">
-              <option [ngValue]="null">Toutes les periodes</option>
+              <option [ngValue]="null">Toutes les périodes</option>
               <option value="2020">2020s</option>
               <option value="2010">2010s</option>
               <option value="2000">2000s</option>
@@ -71,18 +71,18 @@ type SearchMode = 'none' | 'text' | 'discover';
             </select>
 
             <select [ngModel]="selectedSort()" (ngModelChange)="onFilterChange('sort', $event)" class="select">
-              <option [ngValue]="null">Tri : Popularite</option>
+              <option [ngValue]="null">Tri : Popularité</option>
               <option value="vote_average.desc">Meilleure note</option>
-              <option value="primary_release_date.desc">Plus recents</option>
+              <option value="primary_release_date.desc">Plus récents</option>
               <option value="revenue.desc">Plus gros box-office</option>
             </select>
 
             <select [ngModel]="selectedLanguage()" (ngModelChange)="onFilterChange('language', $event)" class="select">
               <option [ngValue]="null">Toutes les langues</option>
-              <option value="fr">Francais</option>
+              <option value="fr">Français</option>
               <option value="en">Anglais</option>
               <option value="ja">Japonais</option>
-              <option value="ko">Coreen</option>
+              <option value="ko">Coréen</option>
               <option value="es">Espagnol</option>
               <option value="de">Allemand</option>
               <option value="it">Italien</option>
@@ -90,14 +90,14 @@ type SearchMode = 'none' | 'text' | 'discover';
               <option value="hi">Hindi</option>
               <option value="zh">Chinois</option>
               <option value="ru">Russe</option>
-              <option value="sv">Suedois</option>
+              <option value="sv">Suédois</option>
               <option value="da">Danois</option>
-              <option value="th">Thai</option>
+              <option value="th">Thaï</option>
               <option value="tr">Turc</option>
             </select>
 
             <select [ngModel]="selectedRuntime()" (ngModelChange)="onFilterChange('runtime', $event)" class="select">
-              <option [ngValue]="null">Toutes les durees</option>
+              <option [ngValue]="null">Toutes les durées</option>
               <option value="short">Court (&lt; 90 min)</option>
               <option value="medium">Moyen (90 - 120 min)</option>
               <option value="long">Long (&gt; 2h)</option>
@@ -110,7 +110,7 @@ type SearchMode = 'none' | 'text' | 'discover';
                 (ngModelChange)="onDirectorInput($event)"
                 (focus)="onDirectorFocus()"
                 (blur)="hideDirectorDropdown()"
-                [placeholder]="selectedDirector() ? '' : 'Realisateur (ex: Spielberg, Nolan...)'"
+                [placeholder]="selectedDirector() ? '' : 'Réalisateur (ex: Spielberg, Nolan...)'"
                 class="input"
               />
               @if (selectedDirector()) {
@@ -134,7 +134,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             </div>
 
             @if (searched()) {
-              <button class="btn-reset" (click)="resetFilters()">Reinitialiser</button>
+              <button class="btn-reset" (click)="resetFilters()">Réinitialiser</button>
             }
           </div>
 
@@ -142,7 +142,7 @@ type SearchMode = 'none' | 'text' | 'discover';
           <div class="results-area" [class.is-loading]="loading()">
 
             @if (hasResults()) {
-              <div class="results-count">{{ totalResults() }} resultats trouves</div>
+              <div class="results-count">{{ totalResults() }} résultats trouvés</div>
               <div class="movie-grid">
                 @for (movie of movieResults(); track movie.id) {
                   <app-movie-card [movie]="movie" />
@@ -152,7 +152,7 @@ type SearchMode = 'none' | 'text' | 'discover';
               @if (totalPages() > 1) {
                 <div class="pagination">
                   <button class="page-btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)">
-                    &#8592; Precedent
+                    &#8592; Précédent
                   </button>
                   @for (p of visiblePages(); track $index) {
                     @if (p === -1) {
@@ -184,7 +184,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             }
 
             @if (!loading() && searched() && !hasResults()) {
-              <div class="empty-state"><p>Aucun film trouve</p></div>
+              <div class="empty-state"><p>Aucun film trouvé</p></div>
             }
           </div>
         </div>

@@ -23,7 +23,7 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
             {{ movie().vote_average | number:'1.1-1' }}
           </div>
           <p class="overview">{{ movie().overview | slice:0:120 }}{{ movie().overview.length > 120 ? '...' : '' }}</p>
-          <button class="detail-btn">Voir details</button>
+          <button class="detail-btn">Voir détails</button>
         </div>
       </div>
       <div class="info">
