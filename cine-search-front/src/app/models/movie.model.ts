@@ -81,6 +81,7 @@ export interface Person {
   profile_path: string | null;
   known_for_department: string;
   popularity: number;
+  gender: number; // 0=unknown, 1=female, 2=male, 3=non-binary
   known_for: Movie[];
 }
 

@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { LangSwitchComponent } from '../lang-switch/lang-switch.component';
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, LangSwitchComponent],
   template: `
     <header class="header">
       <a routerLink="/" class="logo">
@@ -25,7 +27,7 @@ import { FormsModule } from '@angular/forms';
           [ngModel]="query()"
           (ngModelChange)="query.set($event)"
           (keyup.enter)="onSearch()"
-          placeholder="Rechercher un film, un acteur..."
+          [placeholder]="t('header.searchPlaceholder')"
           class="search-input"
         />
         <button class="search-btn" (click)="onSearch()">
@@ -36,17 +38,22 @@ import { FormsModule } from '@angular/forms';
       </div>
 
       <nav class="nav-links">
-        <a routerLink="/" class="nav-link">Accueil</a>
-        <a routerLink="/search" class="nav-link">Explorer</a>
-        <a routerLink="/search" [queryParams]="{ tab: 'scene' }" class="nav-link">Recherche avancée</a>
+        <a routerLink="/" class="nav-link">{{ t('header.home') }}</a>
+        <a routerLink="/search" class="nav-link">{{ t('header.explore') }}</a>
+        <a routerLink="/search" [queryParams]="{ tab: 'scene' }" class="nav-link">{{ t('header.advanced') }}</a>
       </nav>
+
+      <app-lang-switch class="lang-switch" />
     </header>
   `,
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
   private router = inject(Router);
+  private ts = inject(TranslationService);
   query = signal('');
+
+  t(key: string): string { return this.ts.t(key); }
 
   /** Navigate to movie search with query param. */
   onSearch(): void {

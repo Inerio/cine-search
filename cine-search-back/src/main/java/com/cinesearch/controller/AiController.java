@@ -33,9 +33,11 @@ public class AiController {
     }
 
     @PostMapping("/parse")
-    public ResponseEntity<AiSearchResponse> parse(@Valid @RequestBody AiParseRequest request) {
+    public ResponseEntity<AiSearchResponse> parse(
+            @Valid @RequestBody AiParseRequest request,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
         String userText = request.getText().trim();
-        log.info("AI parse request: '{}'", userText);
+        log.info("AI parse request: '{}' (lang={})", userText, lang);
 
         // 1. LLM structured extraction
         AiMovieQuery parsed = groqService.parseUserQuery(userText);
@@ -47,7 +49,7 @@ public class AiController {
         }
 
         // 3. Resolve results with fallback cascade
-        SearchResult result = resolveResults(parsed, userText);
+        SearchResult result = resolveResults(parsed, userText, lang);
 
         log.info("AI search returned {} results (intent={})", result.movies.size(), parsed.getIntent());
         return ResponseEntity.ok(new AiSearchResponse(parsed, result.movies, result.total));
@@ -63,45 +65,44 @@ public class AiController {
      * Multi-step TMDB resolution. Tries the most specific approach first,
      * then falls back to broader searches until we get results.
      */
-    private SearchResult resolveResults(AiMovieQuery parsed, String userText) {
+    private SearchResult resolveResults(AiMovieQuery parsed, String userText, String lang) {
 
         // Step 1: If LLM identified a title → search by title (most precise)
         if (parsed.getTitle() != null && !parsed.getTitle().isBlank()) {
             log.info("Step 1: searching by title '{}'", parsed.getTitle());
-            SearchResult r = searchTmdb(parsed.getTitle());
+            SearchResult r = searchTmdb(parsed.getTitle(), lang);
             if (!r.movies.isEmpty()) return r;
         }
 
         // Step 2: If LLM extracted a query → search by query
         if (parsed.getQuery() != null && !parsed.getQuery().isBlank()) {
             log.info("Step 2: searching by query '{}'", parsed.getQuery());
-            SearchResult r = searchTmdb(parsed.getQuery());
+            SearchResult r = searchTmdb(parsed.getQuery(), lang);
             if (!r.movies.isEmpty()) return r;
 
             // Step 2.5: query returned 0 → try individual keywords (longest first)
             log.info("Step 2.5: trying individual keywords from query");
-            SearchResult kwResult = searchByKeywords(parsed.getQuery());
+            SearchResult kwResult = searchByKeywords(parsed.getQuery(), lang);
             if (!kwResult.movies.isEmpty()) return kwResult;
         }
 
         // Step 3: If we have filters (genres/year/language/sort) → discover
-        // Cap totalResults to actual returned count to avoid showing "279K films"
         if (hasFilters(parsed)) {
             log.info("Step 3: discover with filters genres={}, year={}, lang={}",
                     parsed.getGenres(), parsed.getYear(), parsed.getLanguage());
-            SearchResult r = discoverTmdb(parsed);
+            SearchResult r = discoverTmdb(parsed, lang);
             if (!r.movies.isEmpty()) return r;
         }
 
         // Step 4: Last resort — search TMDB with the raw user text
         log.info("Step 4: fallback search with raw userText");
-        SearchResult r = searchTmdb(userText);
+        SearchResult r = searchTmdb(userText, lang);
         if (!r.movies.isEmpty()) return r;
 
         // Step 5: Absolute last resort — discover popular movies in detected genres
         if (parsed.getGenres() != null && !parsed.getGenres().isEmpty()) {
             log.info("Step 5: fallback discover popular in genre");
-            return discoverTmdb(parsed);
+            return discoverTmdb(parsed, lang);
         }
 
         log.info("No results found after all fallback steps");
@@ -112,7 +113,7 @@ public class AiController {
      * Splits a query into individual keywords (>3 chars), sorted longest first,
      * and searches TMDB with each until we get results.
      */
-    private SearchResult searchByKeywords(String query) {
+    private SearchResult searchByKeywords(String query, String lang) {
         List<String> keywords = Arrays.stream(query.split("\\s+"))
                 .filter(w -> w.length() > 3)
                 .sorted((a, b) -> b.length() - a.length())
@@ -121,14 +122,14 @@ public class AiController {
 
         for (String keyword : keywords) {
             log.info("  keyword search: '{}'", keyword);
-            SearchResult r = searchTmdb(keyword);
+            SearchResult r = searchTmdb(keyword, lang);
             if (!r.movies.isEmpty()) return r;
         }
         return new SearchResult(List.of(), 0);
     }
 
-    private SearchResult searchTmdb(String query) {
-        MovieListResponse response = tmdbService.searchMovies(query, 1);
+    private SearchResult searchTmdb(String query, String lang) {
+        MovieListResponse response = tmdbService.searchMovies(query, 1, lang);
         if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
             return new SearchResult(response.getResults(),
                     response.getTotalResults() != null ? response.getTotalResults() : response.getResults().size());
@@ -136,18 +137,18 @@ public class AiController {
         return new SearchResult(List.of(), 0);
     }
 
-    private SearchResult discoverTmdb(AiMovieQuery parsed) {
+    private SearchResult discoverTmdb(AiMovieQuery parsed, String lang) {
         MovieListResponse response = tmdbService.discoverMoviesAdvanced(
                 resolveGenreId(parsed.getGenres()),
                 parsed.getYear(),
                 resolveSortRating(parsed.getSort()),
                 resolveLanguageCode(parsed.getLanguage()),
                 resolveTmdbSort(parsed.getSort()),
-                1
+                1,
+                lang
         );
         if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
             // Cap totalResults to actual page size — discover can return 200K+ total
-            // which is meaningless to the user. Show the count we actually return.
             return new SearchResult(response.getResults(), response.getResults().size());
         }
         return new SearchResult(List.of(), 0);

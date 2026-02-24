@@ -12,6 +12,7 @@ public class PersonDto {
     @JsonProperty("known_for_department")
     private String knownForDepartment;
     private Double popularity;
+    private Integer gender;
     @JsonProperty("known_for")
     private List<MovieDto> knownFor;
 
@@ -25,6 +26,8 @@ public class PersonDto {
     public void setKnownForDepartment(String knownForDepartment) { this.knownForDepartment = knownForDepartment; }
     public Double getPopularity() { return popularity; }
     public void setPopularity(Double popularity) { this.popularity = popularity; }
+    public Integer getGender() { return gender; }
+    public void setGender(Integer gender) { this.gender = gender; }
     public List<MovieDto> getKnownFor() { return knownFor; }
     public void setKnownFor(List<MovieDto> knownFor) { this.knownFor = knownFor; }
 }

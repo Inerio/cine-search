@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Location, DecimalPipe, SlicePipe } from '@angular/common';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
+import { TranslationService } from '../../services/translation.service';
 import { MovieDetail, CastMember } from '../../models/movie.model';
 
 @Component({
@@ -17,7 +18,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
         </div>
 
         <div class="detail-content">
-          <button class="back-btn" (click)="goBack()">&#8592; Retour</button>
+          <button class="back-btn" (click)="goBack()">&#8592; {{ t('detail.back') }}</button>
 
           <div class="detail-header">
             <img
@@ -36,7 +37,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
                 <span class="rating">
                   <span class="star">&#9733;</span>
                   {{ m.vote_average | number:'1.1-1' }}
-                  <span class="vote-count">({{ m.vote_count }} votes)</span>
+                  <span class="vote-count">({{ m.vote_count }} {{ t('detail.votes') }})</span>
                 </span>
                 <span class="separator">&#8226;</span>
                 <span>{{ m.release_date | slice:0:4 }}</span>
@@ -53,15 +54,15 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
               </div>
 
               <div class="synopsis">
-                <h3>Synopsis</h3>
-                <p>{{ m.overview || 'Aucun synopsis disponible.' }}</p>
+                <h3>{{ t('detail.synopsis') }}</h3>
+                <p>{{ m.overview || t('detail.noSynopsis') }}</p>
               </div>
             </div>
           </div>
 
           @if (topCast().length > 0) {
             <section class="cast-section">
-              <h3>Casting principal</h3>
+              <h3>{{ t('detail.cast') }}</h3>
               <div class="cast-grid">
                 @for (member of topCast(); track member.id) {
                   <div class="cast-card">
@@ -83,7 +84,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
 
           @if (director()) {
             <div class="director">
-              <span class="director-label">Realise par</span>
+              <span class="director-label">{{ t('detail.directedBy') }}</span>
               <span class="director-name">{{ director() }}</span>
             </div>
           }
@@ -99,11 +100,14 @@ export class MovieDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
   private movieService = inject(MovieService);
+  private ts = inject(TranslationService);
   imageService = inject(ImageService);
 
   movie = signal<MovieDetail | null>(null);
   topCast = signal<CastMember[]>([]);
   director = signal<string>('');
+
+  t(key: string): string { return this.ts.t(key); }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));

@@ -2,6 +2,7 @@ import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
+import { TranslationService } from '../../services/translation.service';
 import { Movie } from '../../models/movie.model';
 import { Router } from '@angular/router';
 
@@ -25,13 +26,11 @@ import { Router } from '@angular/router';
 
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <h1 class="hero-title">Retrouvez n'importe quel film en quelques secondes</h1>
-        <p class="hero-subtitle">
-          Recherchez par titre, acteur, genre ou décrivez simplement une scène — MovieSeeker trouve le film qu'il vous faut.
-        </p>
+        <h1 class="hero-title">{{ t('home.heroTitle') }}</h1>
+        <p class="hero-subtitle">{{ t('home.heroSubtitle') }}</p>
         <div class="hero-actions">
-          <button class="hero-cta" (click)="goToExplore()">Explorer les films</button>
-          <button class="hero-cta-secondary" (click)="goToSceneSearch()">Recherche avancée</button>
+          <button class="hero-cta" (click)="goToExplore()">{{ t('home.exploreCta') }}</button>
+          <button class="hero-cta-secondary" (click)="goToSceneSearch()">{{ t('home.advancedCta') }}</button>
         </div>
       </div>
     </section>
@@ -39,7 +38,7 @@ import { Router } from '@angular/router';
     <section class="section">
       <h2 class="section-title">
         <span class="title-accent"></span>
-        Tendances de la semaine
+        {{ t('home.trendingSection') }}
       </h2>
       <div class="movie-grid">
         @for (movie of trendingMovies(); track movie.id) {
@@ -51,7 +50,7 @@ import { Router } from '@angular/router';
     <section class="section">
       <h2 class="section-title">
         <span class="title-accent"></span>
-        Films populaires
+        {{ t('home.popularSection') }}
       </h2>
       <div class="movie-grid">
         @for (movie of popularMovies(); track movie.id) {
@@ -66,6 +65,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private movieService = inject(MovieService);
   private imageService = inject(ImageService);
   private router = inject(Router);
+  private ts = inject(TranslationService);
 
   trendingMovies = signal<Movie[]>([]);
   popularMovies = signal<Movie[]>([]);
@@ -80,6 +80,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   private slideshowInterval: any;
 
   private static readonly SLIDE_DURATION = 8000;
+
+  t(key: string): string { return this.ts.t(key); }
 
   ngOnInit(): void {
     this.movieService.getTrending().subscribe(res => {
@@ -126,9 +128,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const nextIndex = (this.currentIndex + 1) % this.backdropUrls.length;
 
     if (this.activeBg() === 0) {
-      // Layer 1 already has the next image loaded — fade to it
       this.activeBg.set(1);
-      // Preload the upcoming image into the now-hidden layer 0
       setTimeout(() => this.backdrop0.set(`url(${this.backdropUrls[nextIndex]})`), 1500);
     } else {
       this.activeBg.set(0);

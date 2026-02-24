@@ -6,6 +6,7 @@ import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { SceneSearchComponent } from '../scene-search/scene-search.component';
 import { ActorResultsComponent } from '../actor-results/actor-results.component';
 import { MovieService } from '../../services/movie.service';
+import { TranslationService } from '../../services/translation.service';
 import { Movie, Genre, Person } from '../../models/movie.model';
 
 type SearchTab = 'movie' | 'actor' | 'scene';
@@ -18,9 +19,9 @@ type SearchMode = 'none' | 'text' | 'discover';
   template: `
     <div class="search-page">
       <div class="tabs">
-        <button class="tab" [class.active]="activeTab() === 'movie'" (click)="setTab('movie')">Film</button>
-        <button class="tab" [class.active]="activeTab() === 'actor'" (click)="setTab('actor')">Acteur</button>
-        <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">Avancée</button>
+        <button class="tab" [class.active]="activeTab() === 'movie'" (click)="setTab('movie')">{{ t('search.tab.movie') }}</button>
+        <button class="tab" [class.active]="activeTab() === 'actor'" (click)="setTab('actor')">{{ t('search.tab.actor') }}</button>
+        <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">{{ t('search.tab.advanced') }}</button>
       </div>
 
       @if (activeTab() === 'movie') {
@@ -31,27 +32,27 @@ type SearchMode = 'none' | 'text' | 'discover';
               [ngModel]="movieQuery()"
               (ngModelChange)="onQueryInput($event)"
               (keyup.enter)="searchNow()"
-              placeholder="Rechercher un film..."
+              [placeholder]="t('search.placeholder')"
               class="input search-input"
             />
-            <button class="btn-trending" (click)="showTrending()" title="Tendances du moment">
+            <button class="btn-trending" (click)="showTrending()" [title]="t('search.trending')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
-              Tendances
+              {{ t('search.trending') }}
             </button>
           </div>
 
           <div class="filters">
             <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="select">
-              <option [ngValue]="null">Tous les genres</option>
+              <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
               @for (genre of genres(); track genre.id) {
                 <option [ngValue]="genre.id">{{ genre.name }}</option>
               }
             </select>
 
             <select [ngModel]="selectedDecade()" (ngModelChange)="onFilterChange('decade', $event)" class="select">
-              <option [ngValue]="null">Toutes les périodes</option>
+              <option [ngValue]="null">{{ t('filter.allPeriods') }}</option>
               <option value="2020">2020s</option>
               <option value="2010">2010s</option>
               <option value="2000">2000s</option>
@@ -59,11 +60,11 @@ type SearchMode = 'none' | 'text' | 'discover';
               <option value="1980">1980s</option>
               <option value="1970">1970s</option>
               <option value="1960">1960s</option>
-              <option value="1900">Avant 1960</option>
+              <option value="1900">{{ t('filter.before1960') }}</option>
             </select>
 
             <select [ngModel]="selectedRating()" (ngModelChange)="onFilterChange('rating', $event)" class="select">
-              <option [ngValue]="null">Note min.</option>
+              <option [ngValue]="null">{{ t('filter.minRating') }}</option>
               <option [ngValue]="6">6+</option>
               <option [ngValue]="7">7+</option>
               <option [ngValue]="8">8+</option>
@@ -71,36 +72,36 @@ type SearchMode = 'none' | 'text' | 'discover';
             </select>
 
             <select [ngModel]="selectedSort()" (ngModelChange)="onFilterChange('sort', $event)" class="select">
-              <option [ngValue]="null">Tri : Popularité</option>
-              <option value="vote_average.desc">Meilleure note</option>
-              <option value="primary_release_date.desc">Plus récents</option>
-              <option value="revenue.desc">Plus gros box-office</option>
+              <option [ngValue]="null">{{ t('filter.sortPopularity') }}</option>
+              <option value="vote_average.desc">{{ t('filter.sortRating') }}</option>
+              <option value="primary_release_date.desc">{{ t('filter.sortRecent') }}</option>
+              <option value="revenue.desc">{{ t('filter.sortRevenue') }}</option>
             </select>
 
             <select [ngModel]="selectedLanguage()" (ngModelChange)="onFilterChange('language', $event)" class="select">
-              <option [ngValue]="null">Toutes les langues</option>
-              <option value="fr">Français</option>
-              <option value="en">Anglais</option>
-              <option value="ja">Japonais</option>
-              <option value="ko">Coréen</option>
-              <option value="es">Espagnol</option>
-              <option value="de">Allemand</option>
-              <option value="it">Italien</option>
-              <option value="pt">Portugais</option>
-              <option value="hi">Hindi</option>
-              <option value="zh">Chinois</option>
-              <option value="ru">Russe</option>
-              <option value="sv">Suédois</option>
-              <option value="da">Danois</option>
-              <option value="th">Thaï</option>
-              <option value="tr">Turc</option>
+              <option [ngValue]="null">{{ t('filter.allLanguages') }}</option>
+              <option value="fr">{{ t('filter.lang.fr') }}</option>
+              <option value="en">{{ t('filter.lang.en') }}</option>
+              <option value="ja">{{ t('filter.lang.ja') }}</option>
+              <option value="ko">{{ t('filter.lang.ko') }}</option>
+              <option value="es">{{ t('filter.lang.es') }}</option>
+              <option value="de">{{ t('filter.lang.de') }}</option>
+              <option value="it">{{ t('filter.lang.it') }}</option>
+              <option value="pt">{{ t('filter.lang.pt') }}</option>
+              <option value="hi">{{ t('filter.lang.hi') }}</option>
+              <option value="zh">{{ t('filter.lang.zh') }}</option>
+              <option value="ru">{{ t('filter.lang.ru') }}</option>
+              <option value="sv">{{ t('filter.lang.sv') }}</option>
+              <option value="da">{{ t('filter.lang.da') }}</option>
+              <option value="th">{{ t('filter.lang.th') }}</option>
+              <option value="tr">{{ t('filter.lang.tr') }}</option>
             </select>
 
             <select [ngModel]="selectedRuntime()" (ngModelChange)="onFilterChange('runtime', $event)" class="select">
-              <option [ngValue]="null">Toutes les durées</option>
-              <option value="short">Court (&lt; 90 min)</option>
-              <option value="medium">Moyen (90 - 120 min)</option>
-              <option value="long">Long (&gt; 2h)</option>
+              <option [ngValue]="null">{{ t('filter.allDurations') }}</option>
+              <option value="short">{{ t('filter.short') }}</option>
+              <option value="medium">{{ t('filter.medium') }}</option>
+              <option value="long">{{ t('filter.long') }}</option>
             </select>
 
             <div class="director-autocomplete">
@@ -110,7 +111,7 @@ type SearchMode = 'none' | 'text' | 'discover';
                 (ngModelChange)="onDirectorInput($event)"
                 (focus)="onDirectorFocus()"
                 (blur)="hideDirectorDropdown()"
-                [placeholder]="selectedDirector() ? '' : 'Réalisateur (ex: Spielberg, Nolan...)'"
+                [placeholder]="selectedDirector() ? '' : t('filter.directorPlaceholder')"
                 class="input"
               />
               @if (selectedDirector()) {
@@ -134,7 +135,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             </div>
 
             @if (searched()) {
-              <button class="btn-reset" (click)="resetFilters()">Réinitialiser</button>
+              <button class="btn-reset" (click)="resetFilters()">{{ t('search.reset') }}</button>
             }
           </div>
 
@@ -142,7 +143,7 @@ type SearchMode = 'none' | 'text' | 'discover';
           <div class="results-area" [class.is-loading]="loading()">
 
             @if (hasResults()) {
-              <div class="results-count">{{ totalResults() }} résultats trouvés</div>
+              <div class="results-count">{{ totalResults() }} {{ t('search.resultsCount') }}</div>
               <div class="movie-grid">
                 @for (movie of movieResults(); track movie.id) {
                   <app-movie-card [movie]="movie" />
@@ -152,7 +153,7 @@ type SearchMode = 'none' | 'text' | 'discover';
               @if (totalPages() > 1) {
                 <div class="pagination">
                   <button class="page-btn" [disabled]="currentPage() <= 1" (click)="goToPage(currentPage() - 1)">
-                    &#8592; Précédent
+                    &#8592; {{ t('search.previous') }}
                   </button>
                   @for (p of visiblePages(); track $index) {
                     @if (p === -1) {
@@ -162,7 +163,7 @@ type SearchMode = 'none' | 'text' | 'discover';
                     }
                   }
                   <button class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">
-                    Suivant &#8594;
+                    {{ t('search.next') }} &#8594;
                   </button>
                 </div>
               }
@@ -170,7 +171,7 @@ type SearchMode = 'none' | 'text' | 'discover';
 
             @if (!hasResults() && !searched() && defaultMovies().length > 0) {
               <div class="default-section">
-                <h3 class="default-title">Tendances du moment</h3>
+                <h3 class="default-title">{{ t('search.trendingTitle') }}</h3>
                 <div class="movie-grid">
                   @for (movie of defaultMovies(); track movie.id) {
                     <app-movie-card [movie]="movie" />
@@ -184,7 +185,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             }
 
             @if (!loading() && searched() && !hasResults()) {
-              <div class="empty-state"><p>Aucun film trouvé</p></div>
+              <div class="empty-state"><p>{{ t('search.noResults') }}</p></div>
             }
           </div>
         </div>
@@ -205,6 +206,7 @@ export class SearchComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private movieService = inject(MovieService);
+  private ts = inject(TranslationService);
 
   // --- UI state ---
   activeTab = signal<SearchTab>('movie');
@@ -237,6 +239,8 @@ export class SearchComponent implements OnInit, OnDestroy {
   private textSearchTimeout: any;
   private directorSearchTimeout: any;
   private activeRequest?: Subscription;
+
+  t(key: string): string { return this.ts.t(key); }
 
   /** True when movieResults has items. */
   hasResults(): boolean {
@@ -323,7 +327,6 @@ export class SearchComponent implements OnInit, OnDestroy {
 
     const trimmed = value.trim();
     if (trimmed.length < 2) {
-      // Query cleared or too short — reset to default view
       if (this.searchMode() === 'text' || !this.searched()) {
         this.searched.set(false);
         this.movieResults.set([]);

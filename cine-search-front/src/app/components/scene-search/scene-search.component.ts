@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
+import { TranslationService } from '../../services/translation.service';
 import { Movie, AiMovieQuery } from '../../models/movie.model';
 
 @Component({
@@ -11,8 +12,8 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
   template: `
     <div class="scene-search">
       <div class="advanced-banner">
-        <h2>Recherche avancée</h2>
-        <p>Décrivez ce que vous cherchez en langage naturel — les résultats s'adaptent à votre demande.</p>
+        <h2>{{ t('scene.title') }}</h2>
+        <p>{{ t('scene.subtitle') }}</p>
       </div>
 
       <div class="prompt-area">
@@ -20,21 +21,21 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
           [ngModel]="description()"
           (ngModelChange)="description.set($event)"
           (keydown)="onKeydown($event)"
-          placeholder="Ex: Un film de science-fiction sombre comme Interstellar, des comédies françaises récentes, le dernier film avec Tom Hanks..."
+          [placeholder]="t('scene.placeholder')"
           class="textarea"
           rows="4"
         ></textarea>
         <div class="prompt-footer">
-          <span class="hint">Ctrl + Entrée pour rechercher</span>
+          <span class="hint">{{ t('scene.hint') }}</span>
           <button
             class="btn-search"
             (click)="search()"
             [disabled]="loading() || description().trim().length < 2">
             @if (loading()) {
               <span class="spinner-small"></span>
-              Analyse en cours...
+              {{ t('scene.loading') }}
             } @else {
-              Rechercher
+              {{ t('scene.search') }}
             }
           </button>
         </div>
@@ -43,7 +44,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
       @if (loading()) {
         <div class="search-loading">
           <div class="pulse-ring"></div>
-          <p>Analyse en cours...</p>
+          <p>{{ t('scene.loading') }}</p>
         </div>
       }
 
@@ -66,7 +67,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
 
       @if (results().length > 0) {
         <div class="results-header">
-          <h3>{{ results().length }} films trouvés</h3>
+          <h3>{{ results().length }} {{ t('scene.resultsCount') }}</h3>
         </div>
         <div class="movie-grid">
           @for (movie of results(); track movie.id) {
@@ -78,10 +79,10 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
       @if (!loading() && searched() && results().length === 0) {
         <div class="empty-state">
           @if (parsedQuery()?.intent === 'unknown') {
-            <p>Votre demande ne semble pas liée au cinéma. Essayez autre chose !</p>
+            <p>{{ t('scene.notRelated') }}</p>
           } @else {
-            <p>Aucune correspondance exacte trouvée.<br>
-            Essayez avec le nom d'un acteur, un titre partiel ou plus de détails !</p>
+            <p>{{ t('scene.noMatch') }}<br>
+            {{ t('scene.tryAgain') }}</p>
           }
         </div>
       }
@@ -91,12 +92,15 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
 })
 export class SceneSearchComponent {
   private movieService = inject(MovieService);
+  private ts = inject(TranslationService);
 
   description = signal('');
   results = signal<Movie[]>([]);
   parsedQuery = signal<AiMovieQuery | null>(null);
   loading = signal(false);
   searched = signal(false);
+
+  t(key: string): string { return this.ts.t(key); }
 
   /** Ctrl+Enter triggers search from textarea. */
   onKeydown(event: KeyboardEvent): void {
@@ -128,13 +132,13 @@ export class SceneSearchComponent {
     });
   }
 
-  /** Maps intent codes to user-friendly French labels. */
+  /** Maps intent codes to user-friendly labels. */
   intentLabel(intent: string): string {
     switch (intent) {
-      case 'search': return 'Recherche';
-      case 'recommend': return 'Recommandation';
-      case 'details': return 'Détails';
-      case 'unknown': return 'Non reconnu';
+      case 'search': return this.t('scene.intentSearch');
+      case 'recommend': return this.t('scene.intentRecommend');
+      case 'details': return this.t('scene.intentDetails');
+      case 'unknown': return this.t('scene.intentUnknown');
       default: return intent;
     }
   }

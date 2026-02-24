@@ -20,26 +20,31 @@ public class MovieController {
 
     @GetMapping("/trending")
     public ResponseEntity<MovieListResponse> getTrending(
-            @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.getTrending(page));
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getTrending(page, lang));
     }
 
     @GetMapping("/popular")
     public ResponseEntity<MovieListResponse> getPopular(
-            @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.getPopular(page));
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getPopular(page, lang));
     }
 
     @GetMapping("/search")
     public ResponseEntity<MovieListResponse> searchMovies(
             @RequestParam String query,
-            @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.searchMovies(query, page));
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.searchMovies(query, page, lang));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MovieDetailDto> getMovieDetail(@PathVariable Long id) {
-        return ResponseEntity.ok(tmdbService.getMovieDetail(id));
+    public ResponseEntity<MovieDetailDto> getMovieDetail(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getMovieDetail(id, lang));
     }
 
     @GetMapping("/discover")
@@ -54,15 +59,17 @@ public class MovieController {
             @RequestParam(required = false) Long directorId,
             @RequestParam(required = false) String decadeStart,
             @RequestParam(required = false) String decadeEnd,
-            @RequestParam(defaultValue = "1") int page) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.discoverMoviesAdvanced(
                 genreId, year, minRating, language, sortBy,
                 runtimeGte, runtimeLte, directorId,
-                decadeStart, decadeEnd, page));
+                decadeStart, decadeEnd, page, lang));
     }
 
     @GetMapping("/genres")
-    public ResponseEntity<GenreListResponse> getGenres() {
-        return ResponseEntity.ok(tmdbService.getGenres());
+    public ResponseEntity<GenreListResponse> getGenres(
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getGenres(lang));
     }
 }

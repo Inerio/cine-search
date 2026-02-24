@@ -19,25 +19,30 @@ public class PersonController {
 
     @GetMapping("/popular")
     public ResponseEntity<PersonSearchResponse> getPopularPersons(
-            @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.getPopularPersons(page));
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getPopularPersons(page, lang));
     }
 
     @GetMapping("/trending")
     public ResponseEntity<PersonSearchResponse> getTrendingPersons(
-            @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.getTrendingPersons(page));
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getTrendingPersons(page, lang));
     }
 
     @GetMapping("/search")
     public ResponseEntity<PersonSearchResponse> searchPersons(
             @RequestParam String query,
-            @RequestParam(defaultValue = "1") int page) {
-        return ResponseEntity.ok(tmdbService.searchPersons(query, page));
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.searchPersons(query, page, lang));
     }
 
     @GetMapping("/{id}/movies")
-    public ResponseEntity<PersonCreditsResponse> getPersonMovies(@PathVariable Long id) {
-        return ResponseEntity.ok(tmdbService.getPersonMovies(id));
+    public ResponseEntity<PersonCreditsResponse> getPersonMovies(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getPersonMovies(id, lang));
     }
 }

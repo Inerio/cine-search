@@ -115,6 +115,13 @@
   }
 }
 
+:host ::ng-deep .lang-switch {
+  position: fixed;
+  top: 20px;
+  right: 2rem;
+  z-index: 1001;
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 0 1rem;

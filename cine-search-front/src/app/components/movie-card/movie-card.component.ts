@@ -2,6 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Movie } from '../../models/movie.model';
 import { ImageService } from '../../services/image.service';
+import { TranslationService } from '../../services/translation.service';
 import { DecimalPipe, SlicePipe } from '@angular/common';
 
 @Component({
@@ -23,7 +24,7 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
             {{ movie().vote_average | number:'1.1-1' }}
           </div>
           <p class="overview">{{ movie().overview | slice:0:120 }}{{ movie().overview.length > 120 ? '...' : '' }}</p>
-          <button class="detail-btn">Voir détails</button>
+          <button class="detail-btn">{{ t('card.viewDetails') }}</button>
         </div>
       </div>
       <div class="info">
@@ -38,6 +39,9 @@ export class MovieCardComponent {
   movie = input.required<Movie>();
   imageService = inject(ImageService);
   private router = inject(Router);
+  private ts = inject(TranslationService);
+
+  t(key: string): string { return this.ts.t(key); }
 
   goToDetail(): void {
     this.router.navigate(['/movie', this.movie().id]);
