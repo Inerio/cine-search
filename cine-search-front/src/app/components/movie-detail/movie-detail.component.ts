@@ -1,6 +1,7 @@
-import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, signal, effect, untracked, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location, DecimalPipe, SlicePipe } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
@@ -103,24 +104,43 @@ export class MovieDetailComponent implements OnInit {
   private location = inject(Location);
   private movieService = inject(MovieService);
   private ts = inject(TranslationService);
+  private destroyRef = inject(DestroyRef);
   imageService = inject(ImageService);
 
   movie = signal<MovieDetail | null>(null);
   topCast = signal<CastMember[]>([]);
   directorInfo = signal<CrewMember | null>(null);
 
+  private movieId = 0;
+  private activeRequest?: Subscription;
+
+  /** Re-fetches movie data whenever the language changes. */
+  private langEffect = effect(() => {
+    this.ts.lang(); // track language signal
+    if (this.movieId > 0) {
+      untracked(() => this.loadMovie(this.movieId));
+    }
+  });
+
   t(key: string): string { return this.ts.t(key); }
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.movieService.getMovieDetail(id).subscribe(detail => {
+    this.destroyRef.onDestroy(() => this.activeRequest?.unsubscribe());
+
+    this.movieId = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadMovie(this.movieId);
+  }
+
+  private loadMovie(id: number): void {
+    this.activeRequest?.unsubscribe();
+    this.activeRequest = this.movieService.getMovieDetail(id).subscribe(detail => {
       this.movie.set(detail);
       if (detail.credits?.cast) {
         this.topCast.set(detail.credits.cast.slice(0, 10));
       }
       if (detail.credits?.crew) {
         const dir = detail.credits.crew.find(c => c.job === 'Director');
-        if (dir) this.directorInfo.set(dir);
+        this.directorInfo.set(dir ?? null);
       }
     });
   }
@@ -129,14 +149,12 @@ export class MovieDetailComponent implements OnInit {
     this.location.back();
   }
 
-  /** Navigate to actor tab with this person pre-selected. */
   goToActor(member: CastMember): void {
     this.router.navigate(['/search'], {
       queryParams: { tab: 'actor', personId: member.id }
     });
   }
 
-  /** Navigate to director tab with this person pre-selected. */
   goToDirector(): void {
     const dir = this.directorInfo();
     if (dir) {
@@ -146,7 +164,6 @@ export class MovieDetailComponent implements OnInit {
     }
   }
 
-  /** Converts total minutes to "Xh Ymin" display format. */
   formatRuntime(minutes: number): string {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;

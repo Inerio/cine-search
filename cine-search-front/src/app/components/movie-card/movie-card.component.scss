@@ -1,10 +1,11 @@
 .movie-card {
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    .poster-wrapper {
+      transform: translateY(-8px) scale(1.04);
+      box-shadow: 0 0 32px rgba(0, 0, 0, 0.5);
+    }
 
     .overlay {
       opacity: 1;
@@ -22,6 +23,7 @@
   overflow: hidden;
   aspect-ratio: 2/3;
   background: #0a0a14;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .poster {
