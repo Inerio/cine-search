@@ -12,6 +12,7 @@ export interface Movie {
   popularity: number;
   genre_ids: number[];
   original_language: string;
+  job?: string; // Present in crew credits (e.g. "Director")
 }
 
 export interface MovieListResponse {
@@ -95,6 +96,7 @@ export interface PersonSearchResponse {
 export interface PersonCreditsResponse {
   id: number;
   cast: Movie[];
+  crew: Movie[];
 }
 
 // --- AI Parse ---

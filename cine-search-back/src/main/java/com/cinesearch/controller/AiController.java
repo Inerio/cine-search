@@ -36,7 +36,7 @@ public class AiController {
     public ResponseEntity<AiSearchResponse> parse(
             @Valid @RequestBody AiParseRequest request,
             @RequestParam(defaultValue = "fr-FR") String lang) {
-        String userText = request.getText().trim();
+        String userText = request.text().trim();
         log.info("AI parse request: '{}' (lang={})", userText, lang);
 
         // 1. LLM structured extraction
@@ -130,9 +130,9 @@ public class AiController {
 
     private SearchResult searchTmdb(String query, String lang) {
         MovieListResponse response = tmdbService.searchMovies(query, 1, lang);
-        if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
-            return new SearchResult(response.getResults(),
-                    response.getTotalResults() != null ? response.getTotalResults() : response.getResults().size());
+        if (response != null && response.results() != null && !response.results().isEmpty()) {
+            return new SearchResult(response.results(),
+                    response.total_results() != null ? response.total_results() : response.results().size());
         }
         return new SearchResult(List.of(), 0);
     }
@@ -147,9 +147,9 @@ public class AiController {
                 1,
                 lang
         );
-        if (response != null && response.getResults() != null && !response.getResults().isEmpty()) {
+        if (response != null && response.results() != null && !response.results().isEmpty()) {
             // Cap totalResults to actual page size — discover can return 200K+ total
-            return new SearchResult(response.getResults(), response.getResults().size());
+            return new SearchResult(response.results(), response.results().size());
         }
         return new SearchResult(List.of(), 0);
     }

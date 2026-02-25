@@ -6,129 +6,49 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 0;
 
   .tab {
     padding: 0.8rem 1.5rem;
     border: none;
     background: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--color-text-dimmed);
     font-size: 1rem;
     font-weight: 500;
     font-family: inherit;
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
+    transition: all var(--transition);
 
     &:hover {
       color: rgba(255, 255, 255, 0.8);
     }
 
     &.active {
-      color: #fff;
-      border-bottom-color: #a51d1d;
+      color: var(--color-text);
+      border-bottom-color: var(--color-primary);
     }
   }
 }
 
 .search-section {
-  .search-row {
-    display: flex;
-    gap: 0.8rem;
-    margin-bottom: 1rem;
-    align-items: center;
-
-    .search-input {
-      flex: 1;
-    }
-  }
-
   .filters {
-    display: flex;
     gap: 0.8rem;
-    flex-wrap: wrap;
-    margin-bottom: 2rem;
     align-items: flex-start;
   }
 }
 
-.select {
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 10, 20, 0.95);
-  color: #fff;
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #a51d1d;
-  }
-
-  option {
-    background: #0d0d16;
-  }
-}
-
-.btn-trending {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.7rem 1.2rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-
-  svg {
-    opacity: 0.6;
-    transition: opacity 0.2s ease;
-  }
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.85);
-    border-color: rgba(255, 255, 255, 0.15);
-
-    svg {
-      opacity: 1;
-    }
-  }
-}
-
-.btn-reset {
-  padding: 0.7rem 1.2rem;
-  border-radius: 10px;
+// Movie tab reset button — ghost style (different from person tabs)
+.search-section .btn-reset {
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.2s ease;
+  color: var(--color-text-faint);
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius-md);
 
   &:hover {
     color: rgba(255, 255, 255, 0.8);
-  }
-}
-
-// Results area: fades on loading instead of unmounting (prevents layout jump)
-.results-area {
-  transition: opacity 0.2s ease;
-
-  &.is-loading {
-    opacity: 0.45;
-    pointer-events: none;
   }
 }
 
@@ -148,9 +68,9 @@
     left: 0;
     right: 0;
     z-index: 100;
-    background: #0d0d16;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     margin-top: 4px;
     max-height: 280px;
     overflow-y: auto;
@@ -166,7 +86,7 @@
     transition: background 0.15s ease;
 
     &:hover {
-      background: rgba(165, 29, 29, 0.15);
+      background: var(--color-primary-light);
     }
 
     .dropdown-name {
@@ -186,23 +106,23 @@
     gap: 0.4rem;
     margin-top: 0.4rem;
     padding: 0.2rem 0.6rem;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     background: rgba(165, 29, 29, 0.2);
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.8rem;
-    border: 1px solid rgba(165, 29, 29, 0.3);
+    border: 1px solid var(--color-primary-border);
 
     .tag-remove {
       background: none;
       border: none;
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--color-text-dimmed);
       cursor: pointer;
       font-size: 0.9rem;
       padding: 0;
       line-height: 1;
 
       &:hover {
-        color: #fff;
+        color: var(--color-text);
       }
     }
   }
@@ -210,75 +130,12 @@
 
 .default-section {
   .default-title {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
     margin: 0 0 1.5rem;
-
-    &::before {
-      content: '';
-      width: 3px;
-      height: 22px;
-      background: #a51d1d;
-      border-radius: 2px;
-    }
   }
 }
 
 .results-count {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.85rem;
   margin-bottom: 1.2rem;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-top: 3rem;
-  padding-bottom: 1rem;
-
-  .page-btn, .page-num {
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.85rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover:not(:disabled):not(.active) {
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-    }
-  }
-
-  .page-btn {
-    padding: 0.6rem 1.2rem;
-    white-space: nowrap;
-    &:disabled { opacity: 0.25; cursor: default; }
-  }
-
-  .page-num {
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    &.active { background: #a51d1d; border-color: #a51d1d; color: #fff; font-weight: 600; }
-  }
-
-  .page-ellipsis {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 0.85rem;
-    padding: 0 0.3rem;
-    user-select: none;
-  }
 }
 
 @media (max-width: 768px) {
@@ -294,11 +151,7 @@
     max-width: none;
   }
 
-  .select {
+  .filter-select {
     width: 100%;
-  }
-
-  .pagination {
-    flex-wrap: wrap;
   }
 }

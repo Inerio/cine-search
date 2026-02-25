@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Movie } from '../../models/movie.model';
 import { ImageService } from '../../services/image.service';
@@ -9,6 +9,7 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
   selector: 'app-movie-card',
   standalone: true,
   imports: [DecimalPipe, SlicePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="movie-card" (click)="goToDetail()">
       <div class="poster-wrapper">

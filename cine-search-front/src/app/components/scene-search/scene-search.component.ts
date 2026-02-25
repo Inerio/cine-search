@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
@@ -9,6 +9,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
   selector: 'app-scene-search',
   standalone: true,
   imports: [FormsModule, MovieCardComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="scene-search">
       <div class="advanced-banner">

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
   selector: 'app-home',
   standalone: true,
   imports: [MovieCardComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="hero">
       <!-- Two stacked backdrop layers for smooth crossfade -->
@@ -61,11 +62,12 @@ import { Router } from '@angular/router';
   `,
   styleUrl: './home.component.scss'
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
   private movieService = inject(MovieService);
   private imageService = inject(ImageService);
   private router = inject(Router);
   private ts = inject(TranslationService);
+  private destroyRef = inject(DestroyRef);
 
   trendingMovies = signal<Movie[]>([]);
   popularMovies = signal<Movie[]>([]);
@@ -84,6 +86,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   t(key: string): string { return this.ts.t(key); }
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => clearInterval(this.slideshowInterval));
+
     this.movieService.getTrending().subscribe(res => {
       this.trendingMovies.set(res.results.slice(0, 20));
       this.initSlideshow(res.results);
@@ -92,10 +96,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.movieService.getPopular().subscribe(res => {
       this.popularMovies.set(res.results.slice(0, 20));
     });
-  }
-
-  ngOnDestroy(): void {
-    clearInterval(this.slideshowInterval);
   }
 
   /** Shuffles backdrops, sets the first one, and starts the cycle. */

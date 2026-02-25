@@ -111,8 +111,8 @@ public class GroqService {
                             .doBeforeRetry(s -> log.warn("Groq 429 — retry {} ...", s.totalRetries() + 1)))
                     .block();
 
-            if (response != null && response.getChoices() != null && !response.getChoices().isEmpty()) {
-                String raw = response.getChoices().getFirst().getMessage().getContent().trim();
+            if (response != null && response.choices() != null && !response.choices().isEmpty()) {
+                String raw = response.choices().getFirst().message().content().trim();
                 log.info("Groq raw response: {}", raw);
                 return parseAndValidate(raw, userText);
             }

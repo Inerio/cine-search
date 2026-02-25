@@ -7,6 +7,7 @@ import {
   MovieListResponse,
   MovieDetail,
   GenreListResponse,
+  Person,
   PersonSearchResponse,
   PersonCreditsResponse,
   AiSearchResponse
@@ -104,6 +105,13 @@ export class MovieService {
   searchPersons(query: string, page = 1): Observable<PersonSearchResponse> {
     return this.http.get<PersonSearchResponse>(`${this.apiUrl}/persons/search`, {
       params: new HttpParams().set('query', query).set('page', page).set('lang', this.lang)
+    });
+  }
+
+  /** Returns person details by ID (for auto-select from queryParam). */
+  getPersonDetails(personId: number): Observable<Person> {
+    return this.http.get<Person>(`${this.apiUrl}/persons/${personId}`, {
+      params: new HttpParams().set('lang', this.lang)
     });
   }
 

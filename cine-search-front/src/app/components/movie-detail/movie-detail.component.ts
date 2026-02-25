@@ -1,15 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Location, DecimalPipe, SlicePipe } from '@angular/common';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
-import { MovieDetail, CastMember } from '../../models/movie.model';
+import { MovieDetail, CastMember, CrewMember } from '../../models/movie.model';
 
 @Component({
   selector: 'app-movie-detail',
   standalone: true,
   imports: [DecimalPipe, SlicePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (movie(); as m) {
       <div class="detail-page">
@@ -65,7 +66,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
               <h3>{{ t('detail.cast') }}</h3>
               <div class="cast-grid">
                 @for (member of topCast(); track member.id) {
-                  <div class="cast-card">
+                  <div class="cast-card clickable" (click)="goToActor(member)">
                     <img
                       [src]="imageService.getProfileUrl(member.profile_path)"
                       [alt]="member.name"
@@ -82,10 +83,10 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
             </section>
           }
 
-          @if (director()) {
-            <div class="director">
+          @if (directorInfo()) {
+            <div class="director clickable" (click)="goToDirector()">
               <span class="director-label">{{ t('detail.directedBy') }}</span>
-              <span class="director-name">{{ director() }}</span>
+              <span class="director-name">{{ directorInfo()!.name }}</span>
             </div>
           }
         </div>
@@ -98,6 +99,7 @@ import { MovieDetail, CastMember } from '../../models/movie.model';
 })
 export class MovieDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private location = inject(Location);
   private movieService = inject(MovieService);
   private ts = inject(TranslationService);
@@ -105,7 +107,7 @@ export class MovieDetailComponent implements OnInit {
 
   movie = signal<MovieDetail | null>(null);
   topCast = signal<CastMember[]>([]);
-  director = signal<string>('');
+  directorInfo = signal<CrewMember | null>(null);
 
   t(key: string): string { return this.ts.t(key); }
 
@@ -118,13 +120,30 @@ export class MovieDetailComponent implements OnInit {
       }
       if (detail.credits?.crew) {
         const dir = detail.credits.crew.find(c => c.job === 'Director');
-        if (dir) this.director.set(dir.name);
+        if (dir) this.directorInfo.set(dir);
       }
     });
   }
 
   goBack(): void {
     this.location.back();
+  }
+
+  /** Navigate to actor tab with this person pre-selected. */
+  goToActor(member: CastMember): void {
+    this.router.navigate(['/search'], {
+      queryParams: { tab: 'actor', personId: member.id }
+    });
+  }
+
+  /** Navigate to director tab with this person pre-selected. */
+  goToDirector(): void {
+    const dir = this.directorInfo();
+    if (dir) {
+      this.router.navigate(['/search'], {
+        queryParams: { tab: 'director', personId: dir.id }
+      });
+    }
   }
 
   /** Converts total minutes to "Xh Ymin" display format. */

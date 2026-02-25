@@ -1,6 +1,7 @@
 package com.cinesearch.controller;
 
 import com.cinesearch.dto.PersonCreditsResponse;
+import com.cinesearch.dto.PersonDto;
 import com.cinesearch.dto.PersonSearchResponse;
 import com.cinesearch.service.TmdbService;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,13 @@ public class PersonController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.searchPersons(query, page, lang));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PersonDto> getPersonDetails(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getPersonDetails(id, lang));
     }
 
     @GetMapping("/{id}/movies")

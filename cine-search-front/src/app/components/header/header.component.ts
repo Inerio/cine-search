@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LangSwitchComponent } from '../lang-switch/lang-switch.component';
@@ -8,6 +8,7 @@ import { TranslationService } from '../../services/translation.service';
   selector: 'app-header',
   standalone: true,
   imports: [RouterLink, FormsModule, LangSwitchComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="header">
       <a routerLink="/" class="logo">

@@ -1,26 +1,30 @@
-import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { SceneSearchComponent } from '../scene-search/scene-search.component';
 import { ActorResultsComponent } from '../actor-results/actor-results.component';
+import { DirectorResultsComponent } from '../director-results/director-results.component';
 import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
 import { Movie, Genre, Person } from '../../models/movie.model';
+import { computeVisiblePages } from '../../utils/pagination';
 
-type SearchTab = 'movie' | 'actor' | 'scene';
+type SearchTab = 'movie' | 'actor' | 'director' | 'scene';
 type SearchMode = 'none' | 'text' | 'discover';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [FormsModule, MovieCardComponent, SceneSearchComponent, ActorResultsComponent],
+  imports: [FormsModule, MovieCardComponent, SceneSearchComponent, ActorResultsComponent, DirectorResultsComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="search-page">
       <div class="tabs">
         <button class="tab" [class.active]="activeTab() === 'movie'" (click)="setTab('movie')">{{ t('search.tab.movie') }}</button>
         <button class="tab" [class.active]="activeTab() === 'actor'" (click)="setTab('actor')">{{ t('search.tab.actor') }}</button>
+        <button class="tab" [class.active]="activeTab() === 'director'" (click)="setTab('director')">{{ t('search.tab.director') }}</button>
         <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">{{ t('search.tab.advanced') }}</button>
       </div>
 
@@ -44,14 +48,14 @@ type SearchMode = 'none' | 'text' | 'discover';
           </div>
 
           <div class="filters">
-            <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="select">
+            <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
               @for (genre of genres(); track genre.id) {
                 <option [ngValue]="genre.id">{{ genre.name }}</option>
               }
             </select>
 
-            <select [ngModel]="selectedDecade()" (ngModelChange)="onFilterChange('decade', $event)" class="select">
+            <select [ngModel]="selectedDecade()" (ngModelChange)="onFilterChange('decade', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.allPeriods') }}</option>
               <option value="2020">2020s</option>
               <option value="2010">2010s</option>
@@ -63,7 +67,7 @@ type SearchMode = 'none' | 'text' | 'discover';
               <option value="1900">{{ t('filter.before1960') }}</option>
             </select>
 
-            <select [ngModel]="selectedRating()" (ngModelChange)="onFilterChange('rating', $event)" class="select">
+            <select [ngModel]="selectedRating()" (ngModelChange)="onFilterChange('rating', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.minRating') }}</option>
               <option [ngValue]="6">6+</option>
               <option [ngValue]="7">7+</option>
@@ -71,14 +75,14 @@ type SearchMode = 'none' | 'text' | 'discover';
               <option [ngValue]="9">9+</option>
             </select>
 
-            <select [ngModel]="selectedSort()" (ngModelChange)="onFilterChange('sort', $event)" class="select">
+            <select [ngModel]="selectedSort()" (ngModelChange)="onFilterChange('sort', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.sortPopularity') }}</option>
               <option value="vote_average.desc">{{ t('filter.sortRating') }}</option>
               <option value="primary_release_date.desc">{{ t('filter.sortRecent') }}</option>
               <option value="revenue.desc">{{ t('filter.sortRevenue') }}</option>
             </select>
 
-            <select [ngModel]="selectedLanguage()" (ngModelChange)="onFilterChange('language', $event)" class="select">
+            <select [ngModel]="selectedLanguage()" (ngModelChange)="onFilterChange('language', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.allLanguages') }}</option>
               <option value="fr">{{ t('filter.lang.fr') }}</option>
               <option value="en">{{ t('filter.lang.en') }}</option>
@@ -97,7 +101,7 @@ type SearchMode = 'none' | 'text' | 'discover';
               <option value="tr">{{ t('filter.lang.tr') }}</option>
             </select>
 
-            <select [ngModel]="selectedRuntime()" (ngModelChange)="onFilterChange('runtime', $event)" class="select">
+            <select [ngModel]="selectedRuntime()" (ngModelChange)="onFilterChange('runtime', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.allDurations') }}</option>
               <option value="short">{{ t('filter.short') }}</option>
               <option value="medium">{{ t('filter.medium') }}</option>
@@ -139,7 +143,7 @@ type SearchMode = 'none' | 'text' | 'discover';
             }
           </div>
 
-          <!-- Results area: opacity fade during loading to prevent layout jump -->
+          <!-- Results area -->
           <div class="results-area" [class.is-loading]="loading()">
 
             @if (hasResults()) {
@@ -195,6 +199,10 @@ type SearchMode = 'none' | 'text' | 'discover';
         <app-actor-results />
       }
 
+      @if (activeTab() === 'director') {
+        <app-director-results />
+      }
+
       @if (activeTab() === 'scene') {
         <app-scene-search />
       }
@@ -202,11 +210,12 @@ type SearchMode = 'none' | 'text' | 'discover';
   `,
   styleUrl: './search.component.scss'
 })
-export class SearchComponent implements OnInit, OnDestroy {
+export class SearchComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private movieService = inject(MovieService);
   private ts = inject(TranslationService);
+  private destroyRef = inject(DestroyRef);
 
   // --- UI state ---
   activeTab = signal<SearchTab>('movie');
@@ -235,6 +244,10 @@ export class SearchComponent implements OnInit, OnDestroy {
   selectedDirector = signal<Person | null>(null);
   showDirectorDropdown = signal(false);
 
+  // --- Computed ---
+  hasResults = computed(() => this.movieResults().length > 0);
+  visiblePages = computed(() => computeVisiblePages(this.totalPages(), this.currentPage()));
+
   // --- Internal cleanup handles ---
   private textSearchTimeout: any;
   private directorSearchTimeout: any;
@@ -242,36 +255,20 @@ export class SearchComponent implements OnInit, OnDestroy {
 
   t(key: string): string { return this.ts.t(key); }
 
-  /** True when movieResults has items. */
-  hasResults(): boolean {
-    return this.movieResults().length > 0;
-  }
-
-  /** Computes visible page numbers with ellipsis markers (-1). */
-  visiblePages(): number[] {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-    const pages: number[] = [1];
-    if (current > 3) pages.push(-1);
-    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-      pages.push(i);
-    }
-    if (current < total - 2) pages.push(-1);
-    if (pages[pages.length - 1] !== total) pages.push(total);
-    return pages;
-  }
-
   // =====================
   //  Lifecycle
   // =====================
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.textSearchTimeout);
+      clearTimeout(this.directorSearchTimeout);
+      this.activeRequest?.unsubscribe();
+    });
+
     this.movieService.getGenres().subscribe(res => this.genres.set(res.genres));
 
     this.route.queryParams.subscribe(params => {
-      // Always sync tab from URL — defaults to 'movie' when absent
       this.activeTab.set((params['tab'] as SearchTab) || 'movie');
 
       if (params['q']) {
@@ -281,12 +278,6 @@ export class SearchComponent implements OnInit, OnDestroy {
         this.loadDefaultMovies();
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    clearTimeout(this.textSearchTimeout);
-    clearTimeout(this.directorSearchTimeout);
-    this.activeRequest?.unsubscribe();
   }
 
   // =====================
@@ -320,7 +311,6 @@ export class SearchComponent implements OnInit, OnDestroy {
   //  Debounced text search
   // =====================
 
-  /** Handles text input with 400ms debounce. */
   onQueryInput(value: string): void {
     this.movieQuery.set(value);
     clearTimeout(this.textSearchTimeout);
@@ -342,7 +332,6 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.textSearchTimeout = setTimeout(() => this.executeTextSearch(1), 400);
   }
 
-  /** Immediate search triggered by Enter key. */
   searchNow(): void {
     clearTimeout(this.textSearchTimeout);
     const trimmed = this.movieQuery().trim();
@@ -374,7 +363,6 @@ export class SearchComponent implements OnInit, OnDestroy {
   //  Filters (auto-apply)
   // =====================
 
-  /** Updates a single filter and triggers a discover request. */
   onFilterChange(filter: string, value: any): void {
     switch (filter) {
       case 'genre': this.selectedGenre.set(value); break;
@@ -388,7 +376,6 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.executeDiscover(1);
   }
 
-  /** Builds TMDB discover params from current filter state. */
   private buildDiscoverParams(page: number) {
     const runtime = this.selectedRuntime();
     let runtimeGte: number | undefined;
@@ -457,7 +444,6 @@ export class SearchComponent implements OnInit, OnDestroy {
     this.resetFilters();
   }
 
-  /** Clears all filters, query, and reloads trending movies. */
   resetFilters(): void {
     this.selectedGenre.set(null);
     this.selectedRating.set(null);
@@ -480,7 +466,6 @@ export class SearchComponent implements OnInit, OnDestroy {
   //  Director autocomplete
   // =====================
 
-  /** Debounced director search (300ms). */
   onDirectorInput(value: string): void {
     this.directorQuery.set(value);
     if (this.selectedDirector()) this.selectedDirector.set(null);

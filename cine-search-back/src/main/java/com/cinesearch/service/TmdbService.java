@@ -125,6 +125,19 @@ public class TmdbService {
                 .block();
     }
 
+    /** Returns person details from TMDB by ID. */
+    public PersonDto getPersonDetails(Long personId, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/person/{id}")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .build(personId))
+                .retrieve()
+                .bodyToMono(PersonDto.class)
+                .block();
+    }
+
     public PersonCreditsResponse getPersonMovies(Long personId, String lang) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder

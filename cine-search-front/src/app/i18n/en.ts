@@ -16,6 +16,7 @@ export const EN: Record<string, string> = {
   // --- Search tabs ---
   'search.tab.movie': 'Movie',
   'search.tab.actor': 'Actor',
+  'search.tab.director': 'Director',
   'search.tab.advanced': 'Advanced',
 
   // --- Search movie ---
@@ -130,6 +131,25 @@ export const EN: Record<string, string> = {
   'actor.filter.sortPopularity': 'Sort: Popularity',
   'actor.filter.sortNameAZ': 'Name A → Z',
   'actor.filter.sortNameZA': 'Name Z → A',
+
+  // --- Director ---
+  'director.placeholder': 'Search a director...',
+  'director.trending': 'Trending',
+  'director.trendingTitle': 'Trending directors',
+  'director.back': 'Back',
+  'director.films': 'directed movies',
+  'director.noResults': 'No director found',
+  'director.reset': 'Reset',
+  'director.popularTitle': 'Popular directors',
+  'director.searchResults': 'Search results',
+  'director.filterResults': 'Filtered results',
+  'director.resultsCount': 'directors found',
+  'director.loadingMore': 'Loading more directors...',
+  'director.filter.allGenres': 'All movie genres',
+  'director.filter.allCountries': 'All countries',
+  'director.filter.sortPopularity': 'Sort: Popularity',
+  'director.filter.sortNameAZ': 'Name A → Z',
+  'director.filter.sortNameZA': 'Name Z → A',
 
   // --- Movie card ---
   'card.viewDetails': 'View details',

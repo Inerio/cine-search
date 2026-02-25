@@ -10,34 +10,38 @@ import { Movie, Person, PersonSearchResponse } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
 import { applyPersonFilters } from '../../utils/person-filters';
 
-type ActorMode = 'popular' | 'trending' | 'search' | 'filter';
+/**
+ * Directors are sparse in TMDB popular/trending results (~10-15% of persons).
+ * Unlike actors, ALL modes use batch-loading + client-side pagination
+ * to guarantee we always fill 36 slots per page.
+ */
+type DirectorMode = 'popular' | 'trending' | 'search' | 'filter';
 
 const PAGE_SIZE = 36;           // 9 columns × 4 rows
-const TMDB_PER_PAGE = 2;        // 2 TMDB pages (40 actors) → display 36
-const BATCH_SIZE = 10;          // Load 10 TMDB pages per batch (200 actors)
-const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
+const BATCH_SIZE = 10;          // Load 10 TMDB pages per batch (200 persons)
+const MAX_TMDB_PAGES = 500;     // Higher cap for directors since they are sparse
 
 @Component({
-  selector: 'app-actor-results',
+  selector: 'app-director-results',
   standalone: true,
   imports: [FormsModule, MovieCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="actor-search">
+    <div class="director-search">
       <div class="search-row">
         <input
           type="text"
-          [ngModel]="actorQuery()"
+          [ngModel]="directorQuery()"
           (ngModelChange)="onQueryInput($event)"
           (keyup.enter)="searchNow()"
-          [placeholder]="t('actor.placeholder')"
+          [placeholder]="t('director.placeholder')"
           class="input search-input"
         />
-        <button class="btn-trending" (click)="showTrending()" [title]="t('actor.trending')">
+        <button class="btn-trending" (click)="showTrending()" [title]="t('director.trending')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
-          {{ t('actor.trending') }}
+          {{ t('director.trending') }}
         </button>
       </div>
 
@@ -51,7 +55,7 @@ const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
         </select>
 
         <select class="filter-select" [ngModel]="selectedGenre()" (ngModelChange)="selectedGenre.set($event); onFilterChange()">
-          <option value="">{{ t('actor.filter.allGenres') }}</option>
+          <option value="">{{ t('director.filter.allGenres') }}</option>
           <option value="action">{{ t('actor.filter.genre.action') }}</option>
           <option value="comedy">{{ t('actor.filter.genre.comedy') }}</option>
           <option value="drama">{{ t('actor.filter.genre.drama') }}</option>
@@ -73,7 +77,7 @@ const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
         </select>
 
         <select class="filter-select" [ngModel]="selectedCountry()" (ngModelChange)="selectedCountry.set($event); onFilterChange()">
-          <option value="">{{ t('actor.filter.allCountries') }}</option>
+          <option value="">{{ t('director.filter.allCountries') }}</option>
           <option value="en">{{ t('actor.filter.country.en') }}</option>
           <option value="fr">{{ t('actor.filter.country.fr') }}</option>
           <option value="ja">{{ t('actor.filter.country.ja') }}</option>
@@ -90,71 +94,71 @@ const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
         </select>
 
         <select class="filter-select" [ngModel]="selectedSort()" (ngModelChange)="selectedSort.set($event); onFilterChange()">
-          <option value="popularity">{{ t('actor.filter.sortPopularity') }}</option>
-          <option value="nameAZ">{{ t('actor.filter.sortNameAZ') }}</option>
-          <option value="nameZA">{{ t('actor.filter.sortNameZA') }}</option>
+          <option value="popularity">{{ t('director.filter.sortPopularity') }}</option>
+          <option value="nameAZ">{{ t('director.filter.sortNameAZ') }}</option>
+          <option value="nameZA">{{ t('director.filter.sortNameZA') }}</option>
         </select>
 
         @if (hasActiveFilters()) {
-          <button class="btn-reset" (click)="resetFilters()">{{ t('actor.reset') }}</button>
+          <button class="btn-reset" (click)="resetFilters()">{{ t('director.reset') }}</button>
         }
       </div>
 
       <!-- Results area -->
-      <div class="results-area" [class.is-loading]="loading() && displayedActors().length > 0">
+      <div class="results-area" [class.is-loading]="loading() && displayedDirectors().length > 0">
 
-        @if (selectedActor()) {
+        @if (selectedDirector()) {
           <div class="selected-person">
-            <button class="back-btn" (click)="clearSelection()">&#8592; {{ t('actor.back') }}</button>
+            <button class="back-btn" (click)="clearSelection()">&#8592; {{ t('director.back') }}</button>
             <div class="person-header">
               <img
-                [src]="imageService.getProfileUrl(selectedActor()!.profile_path, 'w342')"
-                [alt]="selectedActor()!.name"
+                [src]="imageService.getProfileUrl(selectedDirector()!.profile_path, 'w342')"
+                [alt]="selectedDirector()!.name"
                 class="person-photo-large"
               />
               <div>
-                <h2>{{ selectedActor()!.name }}</h2>
-                <p class="filmography-count">{{ actorMovies().length }} {{ t('actor.films') }}</p>
+                <h2>{{ selectedDirector()!.name }}</h2>
+                <p class="filmography-count">{{ directorMovies().length }} {{ t('director.films') }}</p>
               </div>
             </div>
             <div class="movie-grid">
-              @for (movie of actorMovies(); track movie.id) {
+              @for (movie of directorMovies(); track movie.id) {
                 <app-movie-card [movie]="movie" />
               }
             </div>
           </div>
         }
 
-        @if (!selectedActor()) {
-          @if (displayedActors().length > 0 || batchLoading()) {
+        @if (!selectedDirector()) {
+          @if (displayedDirectors().length > 0 || batchLoading()) {
             <div class="results-info">
               <h3 class="default-title">{{ modeTitle() }}</h3>
               @if (totalResults() > 0) {
-                <span class="results-count">{{ totalResults() }} {{ t('actor.resultsCount') }}</span>
+                <span class="results-count">{{ totalResults() }} {{ t('director.resultsCount') }}</span>
               }
             </div>
           }
 
-          @if (displayedActors().length > 0) {
+          @if (displayedDirectors().length > 0) {
             <div class="person-grid">
-              @for (actor of displayedActors(); track actor.id) {
-                <div class="person-card" (click)="selectActor(actor)">
+              @for (director of displayedDirectors(); track director.id) {
+                <div class="person-card" (click)="selectDirector(director)">
                   <img
-                    [src]="imageService.getProfileUrl(actor.profile_path)"
-                    [alt]="actor.name"
+                    [src]="imageService.getProfileUrl(director.profile_path)"
+                    [alt]="director.name"
                     class="person-photo"
                   />
                   <div class="person-info">
-                    <h3>{{ actor.name }}</h3>
-                    <span class="department">{{ actor.known_for_department }}</span>
+                    <h3>{{ director.name }}</h3>
+                    <span class="department">{{ director.known_for_department }}</span>
                   </div>
                 </div>
               }
             </div>
           }
 
-          @if (batchLoading() && displayedActors().length > 0) {
-            <div class="batch-loading-hint">{{ t('actor.loadingMore') }}</div>
+          @if (batchLoading() && displayedDirectors().length > 0) {
+            <div class="batch-loading-hint">{{ t('director.loadingMore') }}</div>
           }
 
           @if (totalPages() > 1 && !loading()) {
@@ -175,20 +179,20 @@ const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
             </div>
           }
 
-          @if (loading() && displayedActors().length === 0 && !batchLoading()) {
+          @if (loading() && displayedDirectors().length === 0 && !batchLoading()) {
             <div class="loader"><div class="spinner"></div></div>
           }
 
-          @if (!loading() && !batchLoading() && displayedActors().length === 0) {
-            <div class="empty-state"><p>{{ t('actor.noResults') }}</p></div>
+          @if (!loading() && !batchLoading() && displayedDirectors().length === 0) {
+            <div class="empty-state"><p>{{ t('director.noResults') }}</p></div>
           }
         }
       </div>
     </div>
   `,
-  styleUrl: './actor-results.component.scss'
+  styleUrl: './director-results.component.scss'
 })
-export class ActorResultsComponent implements OnInit {
+export class DirectorResultsComponent implements OnInit {
   private movieService = inject(MovieService);
   private ts = inject(TranslationService);
   private route = inject(ActivatedRoute);
@@ -196,15 +200,15 @@ export class ActorResultsComponent implements OnInit {
   imageService = inject(ImageService);
 
   // --- Mode ---
-  mode = signal<ActorMode>('popular');
+  mode = signal<DirectorMode>('popular');
 
-  // --- Pagination ---
+  // --- Pagination (always client-side for directors) ---
   currentPage = signal(1);
   totalPages = signal(0);
   totalResults = signal(0);
 
   // --- Search ---
-  actorQuery = signal('');
+  directorQuery = signal('');
 
   // --- Filters ---
   selectedGender = signal(0);
@@ -212,26 +216,22 @@ export class ActorResultsComponent implements OnInit {
   selectedCountry = signal('');
   selectedSort = signal('popularity');
 
-  // --- Actor detail ---
-  selectedActor = signal<Person | null>(null);
-  actorMovies = signal<Movie[]>([]);
+  // --- Director detail ---
+  selectedDirector = signal<Person | null>(null);
+  directorMovies = signal<Movie[]>([]);
 
   // --- Loading ---
   loading = signal(false);
   batchLoading = signal(false);
 
-  // --- Server-page mode data (popular/trending/search without filters) ---
-  private serverPageActors = signal<Person[]>([]);
-
-  // --- Filter mode data (batch loaded) ---
-  private cachedActors = signal<Person[]>([]);
+  // --- All modes use batch-loaded data (directors are sparse in TMDB results) ---
+  private cachedDirectors = signal<Person[]>([]);
   private maxLoadedPage = signal(0);
   private maxAvailablePages = signal(500);
 
-  // --- Computed: filtered + sorted actors (for filter mode) ---
-  private allFilteredActors = computed(() => {
-    if (this.mode() !== 'filter') return this.serverPageActors();
-    return applyPersonFilters(this.cachedActors(), {
+  // --- Computed: filtered + sorted directors ---
+  allFilteredDirectors = computed(() => {
+    return applyPersonFilters(this.cachedDirectors(), {
       gender: this.selectedGender(),
       genre: this.selectedGenre(),
       country: this.selectedCountry(),
@@ -239,11 +239,10 @@ export class ActorResultsComponent implements OnInit {
     });
   });
 
-  // --- Computed: actors to display on current page ---
-  displayedActors = computed(() => {
-    if (this.mode() !== 'filter') return this.allFilteredActors();
+  // --- Computed: directors to display on current page ---
+  displayedDirectors = computed(() => {
     const start = (this.currentPage() - 1) * PAGE_SIZE;
-    return this.allFilteredActors().slice(start, start + PAGE_SIZE);
+    return this.allFilteredDirectors().slice(start, start + PAGE_SIZE);
   });
 
   visiblePages = computed(() => computeVisiblePages(this.totalPages(), this.currentPage()));
@@ -257,10 +256,10 @@ export class ActorResultsComponent implements OnInit {
 
   modeTitle = computed(() => {
     switch (this.mode()) {
-      case 'popular': return this.t('actor.popularTitle');
-      case 'trending': return this.t('actor.trendingTitle');
-      case 'search': return this.t('actor.searchResults');
-      case 'filter': return this.t('actor.filterResults');
+      case 'popular': return this.t('director.popularTitle');
+      case 'trending': return this.t('director.trendingTitle');
+      case 'search': return this.t('director.searchResults');
+      case 'filter': return this.t('director.filterResults');
     }
   });
 
@@ -276,28 +275,28 @@ export class ActorResultsComponent implements OnInit {
     });
 
     const personId = this.route.snapshot.queryParamMap.get('personId');
-    if (personId && this.route.snapshot.queryParamMap.get('tab') === 'actor') {
+    if (personId && this.route.snapshot.queryParamMap.get('tab') === 'director') {
       this.loading.set(true);
       this.movieService.getPersonDetails(+personId).subscribe({
-        next: person => this.selectActor(person),
+        next: person => this.selectDirector(person),
         error: () => {
           this.loading.set(false);
-          this.loadServerPage(1);
+          this.loadBatch(1);
         }
       });
     } else {
-      this.loadServerPage(1);
+      this.loadBatch(1);
     }
   }
 
   // ==================================================
-  //  Server-side pagination (popular / trending / search)
+  //  Data source based on current mode
   // ==================================================
 
   private getDataSource(): (page: number) => Observable<PersonSearchResponse> {
     const mode = this.mode();
     if (mode === 'search') {
-      const query = this.actorQuery().trim();
+      const query = this.directorQuery().trim();
       return (page) => this.movieService.searchPersons(query, page);
     }
     if (mode === 'trending') {
@@ -306,85 +305,59 @@ export class ActorResultsComponent implements OnInit {
     return (page) => this.movieService.getPopularActors(page);
   }
 
-  private loadServerPage(page: number): void {
-    this.activeRequest?.unsubscribe();
-    this.loading.set(true);
-    this.currentPage.set(page);
-
-    const source = this.getDataSource();
-    const tmdbPage1 = (page - 1) * TMDB_PER_PAGE + 1;
-    const tmdbPage2 = tmdbPage1 + 1;
-
-    this.activeRequest = forkJoin([source(tmdbPage1), source(tmdbPage2)]).subscribe({
-      next: ([res1, res2]) => {
-        const all = [...res1.results, ...res2.results];
-        const seen = new Set<number>();
-        const actors = all.filter(p => {
-          if (seen.has(p.id) || !p.profile_path || p.known_for_department !== 'Acting') return false;
-          seen.add(p.id);
-          return true;
-        }).slice(0, PAGE_SIZE);
-
-        this.serverPageActors.set(actors);
-        const tmdbTotalPages = Math.min(res1.total_pages, 500);
-        this.totalPages.set(Math.ceil(tmdbTotalPages / TMDB_PER_PAGE));
-        this.totalResults.set(res1.total_results);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
-  }
-
   // ==================================================
-  //  Filter mode: batch loading + client-side filtering
+  //  Batch loading — used for ALL modes
   // ==================================================
 
-  private loadFilterBatch(startPage: number): void {
+  private loadBatch(startPage: number): void {
     if (startPage > this.maxAvailablePages() || startPage > MAX_TMDB_PAGES) {
       this.batchLoading.set(false);
       this.loading.set(false);
-      this.rebuildFilteredList();
+      this.rebuildList();
       return;
     }
     if (this.batchLoading()) return;
 
     this.batchLoading.set(true);
-    this.loading.set(true);
+    if (this.cachedDirectors().length === 0) {
+      this.loading.set(true);
+    }
 
+    const source = this.getDataSource();
     const endPage = Math.min(startPage + BATCH_SIZE - 1, this.maxAvailablePages(), MAX_TMDB_PAGES);
     const requests: Observable<PersonSearchResponse>[] = [];
     for (let p = startPage; p <= endPage; p++) {
-      requests.push(this.movieService.getPopularActors(p));
+      requests.push(source(p));
     }
 
     this.activeRequest?.unsubscribe();
     this.activeRequest = forkJoin(requests).subscribe({
       next: responses => {
-        const existing = this.cachedActors();
-        const seen = new Set(existing.map(a => a.id));
-        const newActors: Person[] = [];
+        const existing = this.cachedDirectors();
+        const seen = new Set(existing.map(d => d.id));
+        const newDirectors: Person[] = [];
 
         for (const res of responses) {
           this.maxAvailablePages.set(Math.min(res.total_pages, 500));
-          for (const actor of res.results) {
-            if (!seen.has(actor.id) && actor.profile_path && actor.known_for_department === 'Acting') {
-              seen.add(actor.id);
-              newActors.push(actor);
+          for (const person of res.results) {
+            if (!seen.has(person.id) && person.profile_path && person.known_for_department === 'Directing') {
+              seen.add(person.id);
+              newDirectors.push(person);
             }
           }
         }
 
-        this.cachedActors.set([...existing, ...newActors]);
+        this.cachedDirectors.set([...existing, ...newDirectors]);
         this.maxLoadedPage.set(endPage);
-        this.rebuildFilteredList();
+        this.rebuildList();
 
         this.batchLoading.set(false);
         this.loading.set(false);
 
-        const filtered = this.allFilteredActors();
+        const filtered = this.allFilteredDirectors();
         const neededForPage = this.currentPage() * PAGE_SIZE;
         if (filtered.length < neededForPage && endPage < Math.min(this.maxAvailablePages(), MAX_TMDB_PAGES)) {
-          this.loadFilterBatch(endPage + 1);
+          this.loadBatch(endPage + 1);
         }
       },
       error: () => {
@@ -394,8 +367,8 @@ export class ActorResultsComponent implements OnInit {
     });
   }
 
-  private rebuildFilteredList(): void {
-    const filtered = this.allFilteredActors();
+  private rebuildList(): void {
+    const filtered = this.allFilteredDirectors();
     this.totalResults.set(filtered.length);
     this.totalPages.set(Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)));
     if (this.currentPage() > this.totalPages()) {
@@ -403,33 +376,43 @@ export class ActorResultsComponent implements OnInit {
     }
   }
 
+  // ==================================================
+  //  Filter change handler
+  // ==================================================
+
   onFilterChange(): void {
     this.currentPage.set(1);
 
     if (this.hasActiveFilters()) {
       if (this.mode() !== 'filter') {
+        const previousMode = this.mode();
         this.mode.set('filter');
-        this.cachedActors.set([]);
-        this.maxLoadedPage.set(0);
-        this.maxAvailablePages.set(500);
-        this.loadFilterBatch(1);
+        if (this.cachedDirectors().length > 0 && (previousMode === 'popular' || previousMode === 'trending')) {
+          this.rebuildList();
+          const filtered = this.allFilteredDirectors();
+          if (filtered.length < PAGE_SIZE && this.maxLoadedPage() < Math.min(this.maxAvailablePages(), MAX_TMDB_PAGES)) {
+            this.loadBatch(this.maxLoadedPage() + 1);
+          }
+        } else {
+          this.cachedDirectors.set([]);
+          this.maxLoadedPage.set(0);
+          this.maxAvailablePages.set(500);
+          this.loadBatch(1);
+        }
       } else {
-        this.rebuildFilteredList();
-        const filtered = this.allFilteredActors();
+        this.rebuildList();
+        const filtered = this.allFilteredDirectors();
         if (filtered.length < PAGE_SIZE && this.maxLoadedPage() < Math.min(this.maxAvailablePages(), MAX_TMDB_PAGES)) {
-          this.loadFilterBatch(this.maxLoadedPage() + 1);
+          this.loadBatch(this.maxLoadedPage() + 1);
         }
       }
     } else {
-      this.cachedActors.set([]);
-      this.maxLoadedPage.set(0);
-      if (this.actorQuery().trim().length >= 2) {
+      if (this.directorQuery().trim().length >= 2) {
         this.mode.set('search');
-        this.loadServerPage(1);
       } else {
         this.mode.set('popular');
-        this.loadServerPage(1);
       }
+      this.rebuildList();
     }
   }
 
@@ -441,59 +424,57 @@ export class ActorResultsComponent implements OnInit {
     this.onFilterChange();
   }
 
+  // ==================================================
+  //  Pagination — always client-side
+  // ==================================================
+
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
 
-    if (this.mode() === 'filter') {
-      const neededActors = page * PAGE_SIZE;
-      const haveActors = this.allFilteredActors().length;
-      this.currentPage.set(page);
-      if (neededActors > haveActors && this.maxLoadedPage() < Math.min(this.maxAvailablePages(), MAX_TMDB_PAGES)) {
-        this.loadFilterBatch(this.maxLoadedPage() + 1);
-      }
-    } else {
-      this.loadServerPage(page);
+    const neededDirectors = page * PAGE_SIZE;
+    const haveDirectors = this.allFilteredDirectors().length;
+    this.currentPage.set(page);
+
+    if (neededDirectors > haveDirectors && this.maxLoadedPage() < Math.min(this.maxAvailablePages(), MAX_TMDB_PAGES)) {
+      this.loadBatch(this.maxLoadedPage() + 1);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   showTrending(): void {
-    this.actorQuery.set('');
-    this.selectedActor.set(null);
-    this.actorMovies.set([]);
+    this.directorQuery.set('');
+    this.selectedDirector.set(null);
+    this.directorMovies.set([]);
     this.selectedGender.set(0);
     this.selectedGenre.set('');
     this.selectedCountry.set('');
     this.selectedSort.set('popularity');
-    this.cachedActors.set([]);
+    this.cachedDirectors.set([]);
     this.maxLoadedPage.set(0);
+    this.maxAvailablePages.set(500);
     this.mode.set('trending');
-    this.loadServerPage(1);
+    this.loadBatch(1);
   }
 
   onQueryInput(value: string): void {
-    this.actorQuery.set(value);
+    this.directorQuery.set(value);
     clearTimeout(this.searchTimeout);
 
-    if (this.selectedActor()) {
-      this.selectedActor.set(null);
-      this.actorMovies.set([]);
+    if (this.selectedDirector()) {
+      this.selectedDirector.set(null);
+      this.directorMovies.set([]);
     }
 
     const trimmed = value.trim();
     if (trimmed.length < 2) {
       if (this.mode() === 'search') {
-        if (this.hasActiveFilters()) {
-          this.mode.set('filter');
-          this.cachedActors.set([]);
-          this.maxLoadedPage.set(0);
-          this.currentPage.set(1);
-          this.loadFilterBatch(1);
-        } else {
-          this.mode.set('popular');
-          this.loadServerPage(1);
-        }
+        this.mode.set('popular');
+        this.cachedDirectors.set([]);
+        this.maxLoadedPage.set(0);
+        this.maxAvailablePages.set(500);
+        this.currentPage.set(1);
+        this.loadBatch(1);
       }
       return;
     }
@@ -503,29 +484,42 @@ export class ActorResultsComponent implements OnInit {
 
   searchNow(): void {
     clearTimeout(this.searchTimeout);
-    if (this.actorQuery().trim().length >= 2) this.executeSearch();
+    if (this.directorQuery().trim().length >= 2) this.executeSearch();
   }
 
   private executeSearch(): void {
     this.activeRequest?.unsubscribe();
     this.mode.set('search');
     this.currentPage.set(1);
-    this.cachedActors.set([]);
+    this.cachedDirectors.set([]);
     this.maxLoadedPage.set(0);
-    this.loadServerPage(1);
+    this.maxAvailablePages.set(500);
+    this.loadBatch(1);
   }
 
-  selectActor(actor: Person): void {
-    this.selectedActor.set(actor);
+  // ==================================================
+  //  Director selection — filmography uses CREW
+  // ==================================================
+
+  selectDirector(director: Person): void {
+    this.selectedDirector.set(director);
     this.loading.set(true);
 
     this.activeRequest?.unsubscribe();
-    this.activeRequest = this.movieService.getPersonMovies(actor.id).subscribe({
+    this.activeRequest = this.movieService.getPersonMovies(director.id).subscribe({
       next: res => {
-        const sorted = [...res.cast]
-          .filter(m => m.poster_path)
+        const directedMovies = (res.crew || [])
+          .filter(m => m.job === 'Director' && m.poster_path)
           .sort((a, b) => b.popularity - a.popularity);
-        this.actorMovies.set(sorted);
+
+        const seen = new Set<number>();
+        const unique = directedMovies.filter(m => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
+
+        this.directorMovies.set(unique);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -533,7 +527,7 @@ export class ActorResultsComponent implements OnInit {
   }
 
   clearSelection(): void {
-    this.selectedActor.set(null);
-    this.actorMovies.set([]);
+    this.selectedDirector.set(null);
+    this.directorMovies.set([]);
   }
 }

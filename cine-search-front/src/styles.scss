@@ -1,4 +1,34 @@
 // ========================
+// Design System Variables
+// ========================
+
+:root {
+  --color-bg: #07070d;
+  --color-bg-elevated: #0d0d16;
+  --color-primary: #a51d1d;
+  --color-primary-hover: #c62828;
+  --color-primary-light: rgba(165, 29, 29, 0.15);
+  --color-primary-border: rgba(165, 29, 29, 0.3);
+  --color-text: #fff;
+  --color-text-muted: rgba(255, 255, 255, 0.7);
+  --color-text-dimmed: rgba(255, 255, 255, 0.5);
+  --color-text-faint: rgba(255, 255, 255, 0.4);
+  --color-text-ghost: rgba(255, 255, 255, 0.25);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-hover: rgba(255, 255, 255, 0.07);
+  --color-surface-active: rgba(255, 255, 255, 0.08);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 50%;
+  --transition: 0.2s ease;
+}
+
+// ========================
 // Reset & Base
 // ========================
 
@@ -17,8 +47,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #07070d;
-  color: #fff;
+  background: var(--color-bg);
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -44,15 +74,15 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #07070d;
+  background: var(--color-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-border);
   border-radius: 4px;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--color-border-hover);
   }
 }
 
@@ -65,7 +95,7 @@ button {
 // Selection
 ::selection {
   background: rgba(165, 29, 29, 0.4);
-  color: #fff;
+  color: var(--color-text);
 }
 
 // ========================
@@ -87,9 +117,9 @@ button {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.06);
-  border-top-color: #a51d1d;
-  border-radius: 50%;
+  border: 3px solid var(--color-border-subtle);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-full);
   animation: spin 0.8s linear infinite;
 }
 
@@ -102,26 +132,26 @@ button {
   padding: 4rem 0;
 
   p {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--color-text-faint);
     font-size: 1rem;
   }
 }
 
 .btn-primary {
   padding: 0.7rem 1.8rem;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: none;
-  background: #a51d1d;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  transition: all var(--transition);
 
   &:hover:not(:disabled) {
-    background: #c62828;
+    background: var(--color-primary-hover);
     transform: translateY(-1px);
   }
 
@@ -133,22 +163,327 @@ button {
 
 .input {
   padding: 0.7rem 1.2rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: #fff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 0.9rem;
   font-family: inherit;
   flex: 1;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--transition);
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.25);
+    color: var(--color-text-ghost);
   }
 
   &:focus {
     outline: none;
-    border-color: #a51d1d;
+    border-color: var(--color-primary);
+  }
+}
+
+// Global filter select — used across Movie, Actor, and Director tabs
+.filter-select {
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  padding-right: 2rem;
+
+  &:hover {
+    border-color: var(--color-border-hover);
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(165, 29, 29, 0.5);
+  }
+
+  option {
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+  }
+}
+
+// ========================
+// Shared search UI styles
+// ========================
+
+.search-row {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  align-items: center;
+
+  .search-input {
+    flex: 1;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.btn-trending {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-dimmed);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+  flex-shrink: 0;
+
+  svg {
+    opacity: 0.6;
+    transition: opacity var(--transition);
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.85);
+    border-color: var(--color-border-hover);
+
+    svg {
+      opacity: 1;
+    }
+  }
+}
+
+.btn-reset {
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary-border);
+  background: var(--color-primary-light);
+  color: #e25555;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition);
+
+  &:hover {
+    background: rgba(165, 29, 29, 0.2);
+    border-color: rgba(165, 29, 29, 0.5);
+  }
+}
+
+// Opacity fade during loading — prevents layout jump
+.results-area {
+  transition: opacity var(--transition);
+
+  &.is-loading {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+// Section header (results info bar)
+.results-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.results-count {
+  color: var(--color-text-dimmed);
+  font-size: 0.85rem;
+}
+
+.default-title {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 22px;
+    background: var(--color-primary);
+    border-radius: 2px;
+  }
+}
+
+// Batch loading hint
+.batch-loading-hint {
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.82rem;
+  padding: 1rem 0;
+}
+
+// ========================
+// Person cards (actor + director)
+// ========================
+
+.person-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.2rem;
+}
+
+.person-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: all var(--transition);
+
+  &:hover {
+    background: var(--color-surface-hover);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .person-photo {
+    width: 55px;
+    height: 55px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .person-info {
+    h3 {
+      color: var(--color-text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0 0 0.2rem;
+    }
+
+    .department {
+      color: var(--color-text-faint);
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// ========================
+// Person detail (selected actor/director)
+// ========================
+
+.selected-person {
+  .back-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 1.5rem;
+    transition: color var(--transition);
+
+    &:hover {
+      color: var(--color-text);
+    }
+  }
+
+  .person-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+
+    .person-photo-large {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-full);
+      object-fit: cover;
+    }
+
+    h2 {
+      color: var(--color-text);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0 0 0.3rem;
+    }
+
+    .filmography-count {
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+  }
+}
+
+// ========================
+// Pagination
+// ========================
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 3rem;
+  padding-bottom: 1rem;
+
+  .page-btn, .page-num {
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: var(--color-surface);
+    color: var(--color-text-dimmed);
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+
+    &:hover:not(:disabled):not(.active) {
+      background: var(--color-surface-active);
+      color: var(--color-text);
+    }
+  }
+
+  .page-btn {
+    padding: 0.6rem 1.2rem;
+    white-space: nowrap;
+    &:disabled { opacity: 0.25; cursor: default; }
+  }
+
+  .page-num {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text); font-weight: 600; }
+  }
+
+  .page-ellipsis {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+    padding: 0 0.3rem;
+    user-select: none;
   }
 }
 
@@ -160,5 +495,9 @@ button {
   .movie-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 1rem;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
   }
 }

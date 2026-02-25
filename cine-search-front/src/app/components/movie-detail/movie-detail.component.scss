@@ -167,6 +167,26 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  transition: all 0.2s ease;
+  padding: 0.6rem;
+  border-radius: 12px;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+
+      .cast-photo {
+        border-color: rgba(165, 29, 29, 0.4);
+      }
+
+      .cast-name {
+        color: #dc2626;
+      }
+    }
+  }
 
   .cast-photo {
     width: 80px;
@@ -175,6 +195,7 @@
     object-fit: cover;
     margin-bottom: 0.6rem;
     border: 2px solid rgba(255, 255, 255, 0.08);
+    transition: border-color 0.2s ease;
   }
 
   .cast-info {
@@ -185,6 +206,7 @@
       color: #fff;
       font-size: 0.85rem;
       font-weight: 600;
+      transition: color 0.2s ease;
     }
 
     .cast-character {
@@ -200,6 +222,21 @@
   gap: 0.8rem;
   padding: 1rem 0;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+
+  &.clickable {
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 1rem 0.8rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+
+      .director-name {
+        color: #dc2626;
+      }
+    }
+  }
 
   .director-label {
     color: rgba(255, 255, 255, 0.4);
@@ -210,6 +247,7 @@
     color: #fff;
     font-size: 1rem;
     font-weight: 600;
+    transition: color 0.2s ease;
   }
 }
 
