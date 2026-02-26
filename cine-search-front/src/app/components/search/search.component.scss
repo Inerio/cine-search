@@ -52,6 +52,11 @@
   }
 }
 
+// Filters toggle button (mobile only)
+.filters-toggle {
+  display: none;
+}
+
 .director-autocomplete {
   position: relative;
   min-width: 220px;
@@ -138,20 +143,97 @@
   margin-bottom: 1.2rem;
 }
 
+// Tablet
+@media (max-width: 1024px) {
+  .search-page {
+    padding: 1.5rem 2rem;
+  }
+}
+
+// Mobile
 @media (max-width: 768px) {
   .search-page {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+
+  // Tabs: horizontally scrollable
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    gap: 0;
+    margin: 0 -1rem 1.5rem;
+    padding: 0 1rem;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      flex-shrink: 0;
+      padding: 0.7rem 1rem;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+  }
+
+  // Filters toggle button visible on mobile
+  .filters-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-dimmed);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+
+    &:hover {
+      border-color: var(--color-border-hover);
+    }
+
+    .filter-count {
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      margin-left: auto;
+    }
+  }
+
+  // Collapsible filters
+  .filters.filters-collapsed {
+    display: none;
   }
 
   .filters {
     flex-direction: column;
-  }
-
-  .director-autocomplete {
-    max-width: none;
+    gap: 0.5rem;
   }
 
   .filter-select {
     width: 100%;
+  }
+
+  .director-autocomplete {
+    max-width: none;
+    width: 100%;
+  }
+}
+
+// Small phones
+@media (max-width: 480px) {
+  .tabs .tab {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
   }
 }

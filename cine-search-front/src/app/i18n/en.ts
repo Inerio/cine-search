@@ -29,6 +29,7 @@ export const EN: Record<string, string> = {
   "search.previous": "Previous",
   "search.next": "Next",
   "search.reset": "Reset",
+  "search.filters": "Filters",
 
   // --- Filters ---
   "filter.allGenres": "All genres",
@@ -64,7 +65,7 @@ export const EN: Record<string, string> = {
   // --- Scene search (advanced) ---
   "scene.title": "Advanced Search",
   "scene.subtitle":
-    "Describe what you're looking for in natural language — results adapt to your request.",
+    "Describe what you're looking for in natural language - results adapt to your request.",
   "scene.placeholder":
     "E.g. A dark sci-fi movie like Interstellar, recent French comedies, the latest Tom Hanks movie...",
   "scene.hint": "Ctrl + Enter to search",

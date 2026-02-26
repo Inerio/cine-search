@@ -33,6 +33,27 @@
   transition: filter 0.3s ease;
 }
 
+// Always-visible rating badge (shown on mobile, hidden on desktop where overlay handles it)
+.rating-badge {
+  display: none;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  align-items: center;
+  gap: 2px;
+  background: rgba(165, 29, 29, 0.9);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+
+  .star {
+    color: #fbbf24;
+  }
+}
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -105,5 +126,59 @@
   .year {
     color: rgba(255, 255, 255, 0.35);
     font-size: 0.8rem;
+  }
+}
+
+// Mobile: show rating badge, hide hover overlay
+@media (max-width: 768px) {
+  .rating-badge {
+    display: flex;
+  }
+
+  .overlay {
+    display: none;
+  }
+
+  .movie-card:hover {
+    .poster-wrapper {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .poster {
+      filter: none;
+    }
+  }
+
+  .movie-card:active .poster-wrapper {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+}
+
+// Touch devices (regardless of screen size)
+@media (hover: none) and (pointer: coarse) {
+  .rating-badge {
+    display: flex;
+  }
+
+  .overlay {
+    display: none;
+  }
+
+  .movie-card:hover {
+    .poster-wrapper {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .poster {
+      filter: none;
+    }
+  }
+
+  .movie-card:active .poster-wrapper {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
   }
 }

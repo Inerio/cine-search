@@ -41,10 +41,12 @@ import { Router } from '@angular/router';
         <span class="title-accent"></span>
         {{ t('home.trendingSection') }}
       </h2>
-      <div class="movie-grid">
-        @for (movie of trendingMovies(); track movie.id) {
-          <app-movie-card [movie]="movie" />
-        }
+      <div class="scroll-wrapper">
+        <div class="movie-grid home-grid">
+          @for (movie of trendingMovies(); track movie.id) {
+            <app-movie-card [movie]="movie" />
+          }
+        </div>
       </div>
     </section>
 
@@ -53,10 +55,12 @@ import { Router } from '@angular/router';
         <span class="title-accent"></span>
         {{ t('home.popularSection') }}
       </h2>
-      <div class="movie-grid">
-        @for (movie of popularMovies(); track movie.id) {
-          <app-movie-card [movie]="movie" />
-        }
+      <div class="scroll-wrapper">
+        <div class="movie-grid home-grid">
+          @for (movie of popularMovies(); track movie.id) {
+            <app-movie-card [movie]="movie" />
+          }
+        </div>
       </div>
     </section>
   `,

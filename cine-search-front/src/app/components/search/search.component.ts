@@ -47,7 +47,21 @@ type SearchMode = 'none' | 'text' | 'discover';
             </button>
           </div>
 
-          <div class="filters">
+          <button class="filters-toggle" (click)="toggleFilters()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
+              <line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
+            {{ t('search.filters') }}
+            @if (activeFilterCount() > 0) {
+              <span class="filter-count">{{ activeFilterCount() }}</span>
+            }
+          </button>
+
+          <div class="filters" [class.filters-collapsed]="!filtersOpen()">
             <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
               @for (genre of genres(); track genre.id) {
@@ -244,9 +258,23 @@ export class SearchComponent implements OnInit {
   selectedDirector = signal<Person | null>(null);
   showDirectorDropdown = signal(false);
 
+  // --- Mobile filters ---
+  filtersOpen = signal(false);
+
   // --- Computed ---
   hasResults = computed(() => this.movieResults().length > 0);
   visiblePages = computed(() => computeVisiblePages(this.totalPages(), this.currentPage()));
+  activeFilterCount = computed(() => {
+    let count = 0;
+    if (this.selectedGenre()) count++;
+    if (this.selectedDecade()) count++;
+    if (this.selectedRating()) count++;
+    if (this.selectedSort()) count++;
+    if (this.selectedLanguage()) count++;
+    if (this.selectedRuntime()) count++;
+    if (this.selectedDirector()) count++;
+    return count;
+  });
 
   // --- Internal cleanup handles ---
   private textSearchTimeout: any;
@@ -254,6 +282,10 @@ export class SearchComponent implements OnInit {
   private activeRequest?: Subscription;
 
   t(key: string): string { return this.ts.t(key); }
+
+  toggleFilters(): void {
+    this.filtersOpen.update(v => !v);
+  }
 
   // =====================
   //  Lifecycle

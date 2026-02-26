@@ -19,6 +19,10 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
           class="poster"
           loading="lazy"
         />
+        <div class="rating-badge">
+          <span class="star">&#9733;</span>
+          {{ movie().vote_average | number:'1.1-1' }}
+        </div>
         <div class="overlay">
           <div class="rating">
             <span class="star">&#9733;</span>

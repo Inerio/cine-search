@@ -7,3 +7,25 @@
     }
   }
 }
+
+@media (max-width: 768px) {
+  .actor-search {
+    .search-row {
+      flex-direction: column;
+      gap: 0.6rem;
+
+      .search-input {
+        width: 100%;
+      }
+    }
+
+    .filters {
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .filter-select {
+        width: 100%;
+      }
+    }
+  }
+}

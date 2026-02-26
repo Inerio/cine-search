@@ -261,18 +261,55 @@
   height: 50px;
 }
 
-@media (max-width: 768px) {
+// Tablet
+@media (max-width: 1024px) {
   .detail-content {
-    padding: 1rem 1.5rem 3rem;
+    padding: 1rem 2rem 3rem;
+  }
+
+  .detail-header {
+    gap: 2rem;
+
+    .detail-poster {
+      width: 250px;
+    }
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+// Mobile
+@media (max-width: 768px) {
+  .backdrop {
+    height: 40vh;
+  }
+
+  .detail-content {
+    padding: 0.8rem 1rem 3rem;
+  }
+
+  .back-btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .detail-header {
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.2rem;
+    margin-bottom: 2rem;
 
     .detail-poster {
-      width: 220px;
+      width: 180px;
     }
 
     .detail-info {
@@ -282,19 +319,76 @@
   }
 
   .title {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+  }
+
+  .tagline {
+    font-size: 0.9rem;
   }
 
   .meta {
     justify-content: center;
     flex-wrap: wrap;
+    font-size: 0.85rem;
   }
 
   .genres {
     justify-content: center;
   }
 
+  .synopsis p {
+    font-size: 0.9rem;
+  }
+
   .cast-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .cast-card {
+    padding: 0.4rem;
+
+    .cast-photo {
+      width: 60px;
+      height: 60px;
+    }
+
+    .cast-info .cast-name {
+      font-size: 0.78rem;
+    }
+
+    .cast-info .cast-character {
+      font-size: 0.7rem;
+    }
+  }
+
+  .director {
+    &.clickable {
+      padding: 0.8rem;
+      min-height: 44px;
+    }
+  }
+}
+
+// Small phones
+@media (max-width: 480px) {
+  .detail-header .detail-poster {
+    width: 150px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Touch devices
+@media (hover: none) and (pointer: coarse) {
+  .cast-card.clickable:hover {
+    transform: none;
+    background: none;
   }
 }
