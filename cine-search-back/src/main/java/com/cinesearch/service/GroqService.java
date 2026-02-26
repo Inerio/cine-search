@@ -42,7 +42,7 @@ public class GroqService {
     private String systemPrompt;
 
     private final ObjectMapper strictMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public GroqService(
             @Qualifier("groqWebClient") WebClient webClient,
@@ -128,6 +128,15 @@ public class GroqService {
     private AiMovieQuery parseAndValidate(String raw, String originalUserText) {
         // Strip potential markdown code fences
         String json = raw.replaceAll("^```json\\s*", "").replaceAll("```$", "").trim();
+
+        // If still not valid JSON, try to extract the first {...} block
+        if (!json.startsWith("{")) {
+            int start = json.indexOf('{');
+            int end = json.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+                json = json.substring(start, end + 1);
+            }
+        }
 
         try {
             AiMovieQuery query = strictMapper.readValue(json, AiMovieQuery.class);

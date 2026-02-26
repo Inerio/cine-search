@@ -75,6 +75,12 @@ export const EN: Record<string, string> = {
   'scene.notRelated': 'Your query doesn\'t seem related to movies. Try something else!',
   'scene.noMatch': 'No exact match found.',
   'scene.tryAgain': 'Try with an actor name, a partial title or more details!',
+  'scene.bestMatch': 'Best match',
+  'scene.similarMovies': 'Similar movies',
+  'scene.otherResults': 'Other results',
+  'scene.confidenceHigh': 'High confidence',
+  'scene.confidenceMedium': 'Medium confidence',
+  'scene.confidenceLow': 'Low confidence',
 
   // --- Actor ---
   'actor.placeholder': 'Search an actor...',

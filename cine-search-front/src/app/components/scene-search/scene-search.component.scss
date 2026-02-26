@@ -128,12 +128,14 @@
   }
 }
 
+// --- Parsed results bar ---
+
 .parsed-results {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   padding: 0.8rem 1rem;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -148,6 +150,26 @@
     font-weight: 600;
   }
 
+  .confidence-indicator {
+    padding: 0.25rem 0.65rem;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &.confidence-high {
+      background: #2e7d32;
+    }
+
+    &.confidence-medium {
+      background: #f57c00;
+    }
+
+    &.confidence-low {
+      background: #c62828;
+    }
+  }
+
   .parsed-tag {
     padding: 0.25rem 0.65rem;
     border-radius: 16px;
@@ -157,6 +179,12 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .actor-tag {
+    border-color: rgba(165, 29, 29, 0.3);
+    background: rgba(165, 29, 29, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+  }
+
   .parsed-query {
     color: rgba(255, 255, 255, 0.45);
     font-size: 0.85rem;
@@ -164,13 +192,62 @@
   }
 }
 
-.results-header {
-  margin-bottom: 1.5rem;
+.ai-explanation {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  font-style: italic;
+  margin: 0 0 1.5rem;
+  padding: 0 0.2rem;
+  line-height: 1.5;
+}
+
+// --- Best match ---
+
+.best-match-section {
+  margin-bottom: 2.5rem;
 
   h3 {
     font-size: 1.2rem;
     font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0 0 1rem;
+  }
+
+  .best-match-card {
+    max-width: 220px;
+  }
+}
+
+// --- Similar movies ---
+
+.similar-section {
+  margin-bottom: 2.5rem;
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 1rem;
+  }
+}
+
+// --- Results ---
+
+.results-header {
+  margin-bottom: 1.5rem;
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
     margin: 0;
   }
+}
+
+// --- Shared grid ---
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
 }

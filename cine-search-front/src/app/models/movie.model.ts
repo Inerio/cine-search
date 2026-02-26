@@ -113,10 +113,19 @@ export interface AiMovieQuery {
   platform: string | null;
   sort: 'relevance' | 'rating' | 'popularity' | 'recent' | null;
   include_adult: boolean;
+  // Enhanced AI fields
+  confidence: 'high' | 'medium' | 'low' | null;
+  alternate_titles: string[] | null;
+  actors: string[] | null;
+  directors: string[] | null;
+  keywords: string[] | null;
+  explanation: string | null;
 }
 
 export interface AiSearchResponse {
   parsed: AiMovieQuery;
+  bestMatch: Movie | null;
+  similarMovies: Movie[];
   results: Movie[];
   totalResults: number;
 }

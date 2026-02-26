@@ -212,6 +212,53 @@ public class TmdbService {
                 .block();
     }
 
+    /** Returns movies similar to a given movie (TMDB /movie/{id}/similar). */
+    public MovieListResponse getSimilarMovies(Long movieId, int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/movie/{id}/similar")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .queryParam("page", page)
+                        .build(movieId))
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    /**
+     * Discover with comma-separated genre IDs (e.g. "28,12,878") for multi-genre AI search.
+     */
+    public MovieListResponse discoverMoviesWithGenreIds(String genreIds, Integer year, Double minRating,
+                                                         String originalLanguage, String sortBy,
+                                                         int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/discover/movie")
+                            .queryParam("api_key", apiKey)
+                            .queryParam("language", lang)
+                            .queryParam("sort_by", sortBy != null ? sortBy : "popularity.desc")
+                            .queryParam("page", page);
+                    if (genreIds != null && !genreIds.isBlank()) {
+                        uriBuilder.queryParam("with_genres", genreIds);
+                    }
+                    if (year != null) {
+                        uriBuilder.queryParam("primary_release_year", year);
+                    }
+                    if (minRating != null) {
+                        uriBuilder.queryParam("vote_average.gte", minRating);
+                        uriBuilder.queryParam("vote_count.gte", 50);
+                    }
+                    if (originalLanguage != null) {
+                        uriBuilder.queryParam("with_original_language", originalLanguage);
+                    }
+                    return uriBuilder.build();
+                })
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
     @Cacheable(value = "genres", key = "#lang")
     public GenreListResponse getGenres(String lang) {
         return webClient.get()

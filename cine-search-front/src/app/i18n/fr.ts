@@ -75,6 +75,12 @@ export const FR: Record<string, string> = {
   'scene.notRelated': 'Votre demande ne semble pas liée au cinéma. Essayez autre chose !',
   'scene.noMatch': 'Aucune correspondance exacte trouvée.',
   'scene.tryAgain': 'Essayez avec le nom d\'un acteur, un titre partiel ou plus de détails !',
+  'scene.bestMatch': 'Film identifié',
+  'scene.similarMovies': 'Films similaires',
+  'scene.otherResults': 'Autres résultats',
+  'scene.confidenceHigh': 'Confiance élevée',
+  'scene.confidenceMedium': 'Confiance moyenne',
+  'scene.confidenceLow': 'Confiance faible',
 
   // --- Actor ---
   'actor.placeholder': 'Rechercher un acteur...',

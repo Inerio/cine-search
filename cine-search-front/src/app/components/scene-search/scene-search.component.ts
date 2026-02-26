@@ -52,23 +52,56 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
       @if (parsedQuery() && !loading()) {
         <div class="parsed-results">
           <span class="parsed-badge">{{ intentLabel(parsedQuery()!.intent) }}</span>
+          @if (parsedQuery()!.confidence) {
+            <span class="confidence-indicator" [class]="'confidence-' + parsedQuery()!.confidence">
+              {{ confidenceLabel(parsedQuery()!.confidence!) }}
+            </span>
+          }
           @if (parsedQuery()!.genres && parsedQuery()!.genres!.length > 0) {
             @for (genre of parsedQuery()!.genres!; track genre) {
               <span class="parsed-tag">{{ genre }}</span>
             }
           }
+          @if (parsedQuery()!.actors && parsedQuery()!.actors!.length > 0) {
+            @for (actor of parsedQuery()!.actors!; track actor) {
+              <span class="parsed-tag actor-tag">🎭 {{ actor }}</span>
+            }
+          }
           @if (parsedQuery()!.year) {
             <span class="parsed-tag">{{ parsedQuery()!.year }}</span>
           }
-          @if (parsedQuery()!.query) {
-            <span class="parsed-query">{{ parsedQuery()!.query }}</span>
-          }
+        </div>
+        @if (parsedQuery()!.explanation) {
+          <p class="ai-explanation">{{ parsedQuery()!.explanation }}</p>
+        }
+      }
+
+      <!-- Best Match -->
+      @if (bestMatch() && !loading()) {
+        <div class="best-match-section">
+          <h3>{{ t('scene.bestMatch') }}</h3>
+          <div class="best-match-card">
+            <app-movie-card [movie]="bestMatch()!" />
+          </div>
         </div>
       }
 
-      @if (results().length > 0) {
+      <!-- Similar Movies -->
+      @if (similarMovies().length > 0 && !loading()) {
+        <div class="similar-section">
+          <h3>{{ t('scene.similarMovies') }}</h3>
+          <div class="movie-grid">
+            @for (movie of similarMovies(); track movie.id) {
+              <app-movie-card [movie]="movie" />
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Other Results -->
+      @if (results().length > 0 && !loading()) {
         <div class="results-header">
-          <h3>{{ results().length }} {{ t('scene.resultsCount') }}</h3>
+          <h3>{{ bestMatch() ? t('scene.otherResults') : results().length + ' ' + t('scene.resultsCount') }}</h3>
         </div>
         <div class="movie-grid">
           @for (movie of results(); track movie.id) {
@@ -77,7 +110,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
         </div>
       }
 
-      @if (!loading() && searched() && results().length === 0) {
+      @if (!loading() && searched() && !bestMatch() && results().length === 0) {
         <div class="empty-state">
           @if (parsedQuery()?.intent === 'unknown') {
             <p>{{ t('scene.notRelated') }}</p>
@@ -97,6 +130,8 @@ export class SceneSearchComponent {
 
   description = signal('');
   results = signal<Movie[]>([]);
+  bestMatch = signal<Movie | null>(null);
+  similarMovies = signal<Movie[]>([]);
   parsedQuery = signal<AiMovieQuery | null>(null);
   loading = signal(false);
   searched = signal(false);
@@ -118,15 +153,21 @@ export class SceneSearchComponent {
     this.loading.set(true);
     this.searched.set(true);
     this.parsedQuery.set(null);
+    this.bestMatch.set(null);
+    this.similarMovies.set([]);
 
     this.movieService.aiParse(desc).subscribe({
       next: response => {
         this.parsedQuery.set(response.parsed);
+        this.bestMatch.set(response.bestMatch);
+        this.similarMovies.set(response.similarMovies ?? []);
         this.results.set(response.results);
         this.loading.set(false);
       },
       error: () => {
         this.results.set([]);
+        this.bestMatch.set(null);
+        this.similarMovies.set([]);
         this.parsedQuery.set(null);
         this.loading.set(false);
       }
@@ -141,6 +182,16 @@ export class SceneSearchComponent {
       case 'details': return this.t('scene.intentDetails');
       case 'unknown': return this.t('scene.intentUnknown');
       default: return intent;
+    }
+  }
+
+  /** Maps confidence levels to user-friendly labels. */
+  confidenceLabel(confidence: string): string {
+    switch (confidence) {
+      case 'high': return this.t('scene.confidenceHigh');
+      case 'medium': return this.t('scene.confidenceMedium');
+      case 'low': return this.t('scene.confidenceLow');
+      default: return '';
     }
   }
 }

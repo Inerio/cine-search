@@ -8,9 +8,9 @@ import java.util.List;
 /**
  * Structured output from the LLM query extraction.
  * Maps directly to the JSON schema defined in the system prompt.
- * Unknown JSON fields are rejected to enforce strict schema compliance.
+ * Unknown JSON fields are ignored for resilience against LLM format variations.
  */
-@JsonIgnoreProperties(ignoreUnknown = false)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AiMovieQuery {
 
     private String intent;       // "search" | "recommend" | "details" | "unknown"
@@ -26,6 +26,17 @@ public class AiMovieQuery {
 
     @JsonProperty("include_adult")
     private boolean includeAdult;
+
+    // --- NEW fields for enhanced AI search ---
+    private String confidence;                        // "high" | "medium" | "low" | null
+
+    @JsonProperty("alternate_titles")
+    private List<String> alternateTitles;             // max 3 alternate title guesses
+
+    private List<String> actors;                       // max 3 actor names (English)
+    private List<String> directors;                    // max 2 director names (English)
+    private List<String> keywords;                     // max 5 thematic keywords (English)
+    private String explanation;                        // 1-2 sentences in user's language
 
     // --- Getters & Setters ---
 
@@ -62,11 +73,30 @@ public class AiMovieQuery {
     public boolean isIncludeAdult() { return includeAdult; }
     public void setIncludeAdult(boolean includeAdult) { this.includeAdult = includeAdult; }
 
+    public String getConfidence() { return confidence; }
+    public void setConfidence(String confidence) { this.confidence = confidence; }
+
+    public List<String> getAlternateTitles() { return alternateTitles; }
+    public void setAlternateTitles(List<String> alternateTitles) { this.alternateTitles = alternateTitles; }
+
+    public List<String> getActors() { return actors; }
+    public void setActors(List<String> actors) { this.actors = actors; }
+
+    public List<String> getDirectors() { return directors; }
+    public void setDirectors(List<String> directors) { this.directors = directors; }
+
+    public List<String> getKeywords() { return keywords; }
+    public void setKeywords(List<String> keywords) { this.keywords = keywords; }
+
+    public String getExplanation() { return explanation; }
+    public void setExplanation(String explanation) { this.explanation = explanation; }
+
     // --- Validation ---
 
     private static final List<String> VALID_INTENTS = List.of("search", "recommend", "details", "unknown");
     private static final List<String> VALID_TYPES = List.of("movie", "tv");
     private static final List<String> VALID_SORTS = List.of("relevance", "rating", "popularity", "recent");
+    private static final List<String> VALID_CONFIDENCES = List.of("high", "medium", "low");
 
     /**
      * Validates and sanitizes all fields in-place.
@@ -94,6 +124,25 @@ public class AiMovieQuery {
         if (sort != null && !VALID_SORTS.contains(sort)) {
             sort = null;
         }
+        // --- NEW field validation ---
+        if (confidence != null && !VALID_CONFIDENCES.contains(confidence)) {
+            confidence = null;
+        }
+        if (alternateTitles != null && alternateTitles.size() > 3) {
+            alternateTitles = alternateTitles.subList(0, 3);
+        }
+        if (actors != null && actors.size() > 3) {
+            actors = actors.subList(0, 3);
+        }
+        if (directors != null && directors.size() > 2) {
+            directors = directors.subList(0, 2);
+        }
+        if (keywords != null && keywords.size() > 5) {
+            keywords = keywords.subList(0, 5);
+        }
+        if (explanation != null && explanation.length() > 300) {
+            explanation = explanation.substring(0, 300);
+        }
     }
 
     @Override
@@ -107,9 +156,11 @@ public class AiMovieQuery {
                 ", genres=" + genres +
                 ", language='" + language + '\'' +
                 ", country='" + country + '\'' +
-                ", platform='" + platform + '\'' +
-                ", sort='" + sort + '\'' +
-                ", includeAdult=" + includeAdult +
+                ", confidence='" + confidence + '\'' +
+                ", actors=" + actors +
+                ", directors=" + directors +
+                ", keywords=" + keywords +
+                ", explanation='" + explanation + '\'' +
                 '}';
     }
 }
