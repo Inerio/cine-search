@@ -1,0 +1,33 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /opt/cine-search
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Write .env with secrets
+            cat > .env << 'ENVEOF'
+            TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+            CORS_ALLOWED_ORIGINS=https://movieseeker.primary-key.ovh
+            ENVEOF
+
+            # Rebuild and restart containers
+            docker compose up -d --build --remove-orphans
+
+            # Clean up old Docker images
+            docker image prune -f

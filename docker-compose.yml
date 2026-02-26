@@ -8,6 +8,8 @@ services:
     environment:
       - TMDB_API_KEY=${TMDB_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+    restart: unless-stopped
 
   frontend:
     build:
@@ -17,3 +19,4 @@ services:
       - "4200:80"
     depends_on:
       - backend
+    restart: unless-stopped
