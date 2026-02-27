@@ -237,6 +237,10 @@ const MAX_TMDB_PAGES = 500;     // Higher cap for directors since they are spars
               <button class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">
                 {{ t('search.next') }} &#8594;
               </button>
+              <input type="number" class="page-jump-input"
+                     [min]="1" [max]="totalPages()"
+                     [placeholder]="currentPage() + '/' + totalPages()"
+                     (keyup.enter)="onPageJump($event)" />
             </div>
           }
 
@@ -553,6 +557,15 @@ export class DirectorResultsComponent implements OnInit {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  onPageJump(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const page = parseInt(input.value, 10);
+    if (page >= 1 && page <= this.totalPages()) {
+      this.goToPage(page);
+    }
+    input.value = '';
   }
 
   showTrending(): void {

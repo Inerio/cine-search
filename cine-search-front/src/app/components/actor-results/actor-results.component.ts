@@ -13,7 +13,7 @@ import { applyPersonFilters } from '../../utils/person-filters';
 type ActorMode = 'popular' | 'trending' | 'search' | 'filter';
 
 const PAGE_SIZE = 36;           // 9 columns × 4 rows
-const TMDB_PER_PAGE = 2;        // 2 TMDB pages (40 actors) → display 36
+const TMDB_PER_PAGE = 3;        // 3 TMDB pages (60 actors) → display 36
 const BATCH_SIZE = 10;          // Load 10 TMDB pages per batch (200 actors)
 const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
 
@@ -233,6 +233,10 @@ const MAX_TMDB_PAGES = 100;     // Safety cap: 2000 actors max
               <button class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">
                 {{ t('search.next') }} &#8594;
               </button>
+              <input type="number" class="page-jump-input"
+                     [min]="1" [max]="totalPages()"
+                     [placeholder]="currentPage() + '/' + totalPages()"
+                     (keyup.enter)="onPageJump($event)" />
             </div>
           }
 
@@ -417,12 +421,12 @@ export class ActorResultsComponent implements OnInit {
     this.currentPage.set(page);
 
     const source = this.getDataSource();
-    const tmdbPage1 = (page - 1) * TMDB_PER_PAGE + 1;
-    const tmdbPage2 = tmdbPage1 + 1;
+    const startTmdbPage = (page - 1) * TMDB_PER_PAGE + 1;
+    const requests = Array.from({ length: TMDB_PER_PAGE }, (_, i) => source(startTmdbPage + i));
 
-    this.activeRequest = forkJoin([source(tmdbPage1), source(tmdbPage2)]).subscribe({
-      next: ([res1, res2]) => {
-        const all = [...res1.results, ...res2.results];
+    this.activeRequest = forkJoin(requests).subscribe({
+      next: (responses) => {
+        const all = responses.flatMap(r => r.results);
         const seen = new Set<number>();
         const actors = all.filter(p => {
           if (seen.has(p.id) || !p.profile_path || p.known_for_department !== 'Acting') return false;
@@ -431,9 +435,9 @@ export class ActorResultsComponent implements OnInit {
         }).slice(0, PAGE_SIZE);
 
         this.serverPageActors.set(actors);
-        const tmdbTotalPages = Math.min(res1.total_pages, 500);
+        const tmdbTotalPages = Math.min(responses[0].total_pages, 500);
         this.totalPages.set(Math.ceil(tmdbTotalPages / TMDB_PER_PAGE));
-        this.totalResults.set(res1.total_results);
+        this.totalResults.set(responses[0].total_results);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -569,6 +573,15 @@ export class ActorResultsComponent implements OnInit {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  onPageJump(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const page = parseInt(input.value, 10);
+    if (page >= 1 && page <= this.totalPages()) {
+      this.goToPage(page);
+    }
+    input.value = '';
   }
 
   showTrending(): void {

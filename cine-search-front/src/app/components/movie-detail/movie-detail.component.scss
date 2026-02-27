@@ -9,7 +9,7 @@
   right: 0;
   height: 60vh;
   background-size: cover;
-  background-position: center 20%;
+  background-position: center top;
   z-index: 0;
 
   .backdrop-overlay {
@@ -48,6 +48,7 @@
 
 .detail-header {
   display: flex;
+  align-items: flex-start;
   gap: 3rem;
   margin-bottom: 3rem;
 

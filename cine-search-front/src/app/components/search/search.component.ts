@@ -183,22 +183,49 @@ type SearchMode = 'none' | 'text' | 'discover';
                   <button class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goToPage(currentPage() + 1)">
                     {{ t('search.next') }} &#8594;
                   </button>
+                  <input type="number" class="page-jump-input"
+                         [min]="1" [max]="totalPages()"
+                         [placeholder]="currentPage() + '/' + totalPages()"
+                         (keyup.enter)="onPageJump($event)" />
                 </div>
               }
             }
 
             @if (!hasResults() && !searched() && defaultMovies().length > 0) {
               <div class="default-section">
+                <div class="results-count">{{ trendingTotalResults() }} {{ t('search.resultsCount') }}</div>
                 <h3 class="default-title">{{ t('search.trendingTitle') }}</h3>
                 <div class="movie-grid">
                   @for (movie of defaultMovies(); track movie.id) {
                     <app-movie-card [movie]="movie" />
                   }
                 </div>
+
+                @if (trendingTotalPages() > 1) {
+                  <div class="pagination">
+                    <button class="page-btn" [disabled]="trendingPage() <= 1" (click)="goToTrendingPage(trendingPage() - 1)">
+                      &#8592; {{ t('search.previous') }}
+                    </button>
+                    @for (p of trendingVisiblePages(); track $index) {
+                      @if (p === -1) {
+                        <span class="page-ellipsis">...</span>
+                      } @else {
+                        <button class="page-num" [class.active]="p === trendingPage()" (click)="goToTrendingPage(p)">{{ p }}</button>
+                      }
+                    }
+                    <button class="page-btn" [disabled]="trendingPage() >= trendingTotalPages()" (click)="goToTrendingPage(trendingPage() + 1)">
+                      {{ t('search.next') }} &#8594;
+                    </button>
+                    <input type="number" class="page-jump-input"
+                           [min]="1" [max]="trendingTotalPages()"
+                           [placeholder]="trendingPage() + '/' + trendingTotalPages()"
+                           (keyup.enter)="onTrendingPageJump($event)" />
+                  </div>
+                }
               </div>
             }
 
-            @if (loading() && !hasResults()) {
+            @if (loading() && !hasResults() && defaultMovies().length === 0) {
               <div class="loader"><div class="spinner"></div></div>
             }
 
@@ -243,6 +270,9 @@ export class SearchComponent implements OnInit {
   totalPages = signal(0);
   searchMode = signal<SearchMode>('none');
   defaultMovies = signal<Movie[]>([]);
+  trendingPage = signal(1);
+  trendingTotalPages = signal(0);
+  trendingTotalResults = signal(0);
 
   // --- Filters ---
   selectedGenre = signal<number | null>(null);
@@ -264,6 +294,7 @@ export class SearchComponent implements OnInit {
   // --- Computed ---
   hasResults = computed(() => this.movieResults().length > 0);
   visiblePages = computed(() => computeVisiblePages(this.totalPages(), this.currentPage()));
+  trendingVisiblePages = computed(() => computeVisiblePages(this.trendingTotalPages(), this.trendingPage()));
   activeFilterCount = computed(() => {
     let count = 0;
     if (this.selectedGenre()) count++;
@@ -316,10 +347,17 @@ export class SearchComponent implements OnInit {
   //  Default content
   // =====================
 
-  private loadDefaultMovies(): void {
-    this.movieService.getTrending().subscribe({
-      next: res => this.defaultMovies.set(res.results),
-      error: () => {}
+  private loadDefaultMovies(page = 1): void {
+    this.loading.set(true);
+    this.trendingPage.set(page);
+    this.movieService.getTrending(page).subscribe({
+      next: res => {
+        this.defaultMovies.set(res.results);
+        this.trendingTotalPages.set(Math.min(res.total_pages, 500));
+        this.trendingTotalResults.set(res.total_results);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
     });
   }
 
@@ -468,6 +506,30 @@ export class SearchComponent implements OnInit {
     else this.executeDiscover(page);
   }
 
+  onPageJump(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const page = parseInt(input.value, 10);
+    if (page >= 1 && page <= this.totalPages()) {
+      this.goToPage(page);
+    }
+    input.value = '';
+  }
+
+  goToTrendingPage(page: number): void {
+    if (page < 1 || page > this.trendingTotalPages() || page === this.trendingPage()) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.loadDefaultMovies(page);
+  }
+
+  onTrendingPageJump(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const page = parseInt(input.value, 10);
+    if (page >= 1 && page <= this.trendingTotalPages()) {
+      this.goToTrendingPage(page);
+    }
+    input.value = '';
+  }
+
   // =====================
   //  Trending / Reset
   // =====================
@@ -491,6 +553,7 @@ export class SearchComponent implements OnInit {
     this.totalResults.set(0);
     this.currentPage.set(1);
     this.totalPages.set(0);
+    this.trendingPage.set(1);
     this.loadDefaultMovies();
   }
 

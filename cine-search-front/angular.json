@@ -29,7 +29,8 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
-              }
+              },
+              "src/favicon.svg"
             ],
             "styles": ["src/styles.scss"],
             "scripts": []
