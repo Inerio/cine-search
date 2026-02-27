@@ -21,13 +21,13 @@ import { TranslationService } from '../../services/translation.service';
         <span class="logo-text">Movie<span class="accent">Seeker</span></span>
       </a>
 
-      <div class="spacer"></div>
-
       <nav class="nav-links">
         <a routerLink="/" class="nav-link">{{ t('header.home') }}</a>
         <a routerLink="/search" class="nav-link">{{ t('header.explore') }}</a>
         <a routerLink="/search" [queryParams]="{ tab: 'scene' }" class="nav-link">{{ t('header.advanced') }}</a>
       </nav>
+
+      <div class="spacer"></div>
 
       <app-lang-switch />
     </header>

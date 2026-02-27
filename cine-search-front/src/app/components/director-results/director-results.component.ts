@@ -6,7 +6,7 @@ import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
-import { Movie, Person, PersonSearchResponse } from '../../models/movie.model';
+import { Movie, Genre, Person, PersonSearchResponse } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
 import { applyPersonFilters } from '../../utils/person-filters';
 
@@ -45,64 +45,125 @@ const MAX_TMDB_PAGES = 500;     // Higher cap for directors since they are spars
         </button>
       </div>
 
-      <!-- Filters -->
-      <div class="filters">
-        <select class="filter-select" [ngModel]="selectedGender()" (ngModelChange)="selectedGender.set(+$event); onFilterChange()">
-          <option [ngValue]="0">{{ t('actor.filter.allGenders') }}</option>
-          <option [ngValue]="2">{{ t('actor.filter.male') }}</option>
-          <option [ngValue]="1">{{ t('actor.filter.female') }}</option>
-          <option [ngValue]="3">{{ t('actor.filter.nonBinary') }}</option>
-        </select>
+      @if (!selectedDirector()) {
+        <!-- Person filters -->
+        <div class="filters">
+          <select class="filter-select" [ngModel]="selectedGender()" (ngModelChange)="selectedGender.set(+$event); onFilterChange()">
+            <option [ngValue]="0">{{ t('actor.filter.allGenders') }}</option>
+            <option [ngValue]="2">{{ t('actor.filter.male') }}</option>
+            <option [ngValue]="1">{{ t('actor.filter.female') }}</option>
+            <option [ngValue]="3">{{ t('actor.filter.nonBinary') }}</option>
+          </select>
 
-        <select class="filter-select" [ngModel]="selectedGenre()" (ngModelChange)="selectedGenre.set($event); onFilterChange()">
-          <option value="">{{ t('director.filter.allGenres') }}</option>
-          <option value="action">{{ t('actor.filter.genre.action') }}</option>
-          <option value="comedy">{{ t('actor.filter.genre.comedy') }}</option>
-          <option value="drama">{{ t('actor.filter.genre.drama') }}</option>
-          <option value="horror">{{ t('actor.filter.genre.horror') }}</option>
-          <option value="scifi">{{ t('actor.filter.genre.scifi') }}</option>
-          <option value="romance">{{ t('actor.filter.genre.romance') }}</option>
-          <option value="thriller">{{ t('actor.filter.genre.thriller') }}</option>
-          <option value="animation">{{ t('actor.filter.genre.animation') }}</option>
-          <option value="adventure">{{ t('actor.filter.genre.adventure') }}</option>
-          <option value="fantasy">{{ t('actor.filter.genre.fantasy') }}</option>
-          <option value="crime">{{ t('actor.filter.genre.crime') }}</option>
-          <option value="family">{{ t('actor.filter.genre.family') }}</option>
-          <option value="documentary">{{ t('actor.filter.genre.documentary') }}</option>
-          <option value="war">{{ t('actor.filter.genre.war') }}</option>
-          <option value="history">{{ t('actor.filter.genre.history') }}</option>
-          <option value="music">{{ t('actor.filter.genre.music') }}</option>
-          <option value="western">{{ t('actor.filter.genre.western') }}</option>
-          <option value="mystery">{{ t('actor.filter.genre.mystery') }}</option>
-        </select>
+          <select class="filter-select" [ngModel]="selectedGenre()" (ngModelChange)="selectedGenre.set($event); onFilterChange()">
+            <option value="">{{ t('director.filter.allGenres') }}</option>
+            <option value="action">{{ t('actor.filter.genre.action') }}</option>
+            <option value="comedy">{{ t('actor.filter.genre.comedy') }}</option>
+            <option value="drama">{{ t('actor.filter.genre.drama') }}</option>
+            <option value="horror">{{ t('actor.filter.genre.horror') }}</option>
+            <option value="scifi">{{ t('actor.filter.genre.scifi') }}</option>
+            <option value="romance">{{ t('actor.filter.genre.romance') }}</option>
+            <option value="thriller">{{ t('actor.filter.genre.thriller') }}</option>
+            <option value="animation">{{ t('actor.filter.genre.animation') }}</option>
+            <option value="adventure">{{ t('actor.filter.genre.adventure') }}</option>
+            <option value="fantasy">{{ t('actor.filter.genre.fantasy') }}</option>
+            <option value="crime">{{ t('actor.filter.genre.crime') }}</option>
+            <option value="family">{{ t('actor.filter.genre.family') }}</option>
+            <option value="documentary">{{ t('actor.filter.genre.documentary') }}</option>
+            <option value="war">{{ t('actor.filter.genre.war') }}</option>
+            <option value="history">{{ t('actor.filter.genre.history') }}</option>
+            <option value="music">{{ t('actor.filter.genre.music') }}</option>
+            <option value="western">{{ t('actor.filter.genre.western') }}</option>
+            <option value="mystery">{{ t('actor.filter.genre.mystery') }}</option>
+          </select>
 
-        <select class="filter-select" [ngModel]="selectedCountry()" (ngModelChange)="selectedCountry.set($event); onFilterChange()">
-          <option value="">{{ t('director.filter.allCountries') }}</option>
-          <option value="en">{{ t('actor.filter.country.en') }}</option>
-          <option value="fr">{{ t('actor.filter.country.fr') }}</option>
-          <option value="ja">{{ t('actor.filter.country.ja') }}</option>
-          <option value="ko">{{ t('actor.filter.country.ko') }}</option>
-          <option value="es">{{ t('actor.filter.country.es') }}</option>
-          <option value="de">{{ t('actor.filter.country.de') }}</option>
-          <option value="it">{{ t('actor.filter.country.it') }}</option>
-          <option value="pt">{{ t('actor.filter.country.pt') }}</option>
-          <option value="hi">{{ t('actor.filter.country.hi') }}</option>
-          <option value="zh">{{ t('actor.filter.country.zh') }}</option>
-          <option value="ru">{{ t('actor.filter.country.ru') }}</option>
-          <option value="sv">{{ t('actor.filter.country.sv') }}</option>
-          <option value="tr">{{ t('actor.filter.country.tr') }}</option>
-        </select>
+          <select class="filter-select" [ngModel]="selectedCountry()" (ngModelChange)="selectedCountry.set($event); onFilterChange()">
+            <option value="">{{ t('director.filter.allCountries') }}</option>
+            <option value="en">{{ t('actor.filter.country.en') }}</option>
+            <option value="fr">{{ t('actor.filter.country.fr') }}</option>
+            <option value="ja">{{ t('actor.filter.country.ja') }}</option>
+            <option value="ko">{{ t('actor.filter.country.ko') }}</option>
+            <option value="es">{{ t('actor.filter.country.es') }}</option>
+            <option value="de">{{ t('actor.filter.country.de') }}</option>
+            <option value="it">{{ t('actor.filter.country.it') }}</option>
+            <option value="pt">{{ t('actor.filter.country.pt') }}</option>
+            <option value="hi">{{ t('actor.filter.country.hi') }}</option>
+            <option value="zh">{{ t('actor.filter.country.zh') }}</option>
+            <option value="ru">{{ t('actor.filter.country.ru') }}</option>
+            <option value="sv">{{ t('actor.filter.country.sv') }}</option>
+            <option value="tr">{{ t('actor.filter.country.tr') }}</option>
+          </select>
 
-        <select class="filter-select" [ngModel]="selectedSort()" (ngModelChange)="selectedSort.set($event); onFilterChange()">
-          <option value="popularity">{{ t('director.filter.sortPopularity') }}</option>
-          <option value="nameAZ">{{ t('director.filter.sortNameAZ') }}</option>
-          <option value="nameZA">{{ t('director.filter.sortNameZA') }}</option>
-        </select>
+          <select class="filter-select" [ngModel]="selectedSort()" (ngModelChange)="selectedSort.set($event); onFilterChange()">
+            <option value="popularity">{{ t('director.filter.sortPopularity') }}</option>
+            <option value="nameAZ">{{ t('director.filter.sortNameAZ') }}</option>
+            <option value="nameZA">{{ t('director.filter.sortNameZA') }}</option>
+          </select>
 
-        @if (hasActiveFilters()) {
-          <button class="btn-reset" (click)="resetFilters()">{{ t('director.reset') }}</button>
-        }
-      </div>
+          @if (hasActiveFilters()) {
+            <button class="btn-reset" (click)="resetFilters()">{{ t('director.reset') }}</button>
+          }
+        </div>
+      }
+
+      @if (selectedDirector()) {
+        <!-- Filmography filters -->
+        <div class="filters">
+          <select [ngModel]="filmGenre()" (ngModelChange)="filmGenre.set($event)" class="filter-select">
+            <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
+            @for (genre of genres(); track genre.id) {
+              <option [ngValue]="genre.id">{{ genre.name }}</option>
+            }
+          </select>
+
+          <select [ngModel]="filmDecade()" (ngModelChange)="filmDecade.set($event)" class="filter-select">
+            <option [ngValue]="null">{{ t('filter.allPeriods') }}</option>
+            <option value="2020">2020s</option>
+            <option value="2010">2010s</option>
+            <option value="2000">2000s</option>
+            <option value="1990">1990s</option>
+            <option value="1980">1980s</option>
+            <option value="1970">1970s</option>
+            <option value="1960">1960s</option>
+            <option value="1900">{{ t('filter.before1960') }}</option>
+          </select>
+
+          <select [ngModel]="filmRating()" (ngModelChange)="filmRating.set($event)" class="filter-select">
+            <option [ngValue]="null">{{ t('filter.minRating') }}</option>
+            <option [ngValue]="6">6+</option>
+            <option [ngValue]="7">7+</option>
+            <option [ngValue]="8">8+</option>
+            <option [ngValue]="9">9+</option>
+          </select>
+
+          <select [ngModel]="filmSort()" (ngModelChange)="filmSort.set($event)" class="filter-select">
+            <option value="popularity">{{ t('filter.sortPopularity') }}</option>
+            <option value="vote_average">{{ t('filter.sortRating') }}</option>
+            <option value="recent">{{ t('filter.sortRecent') }}</option>
+          </select>
+
+          <select [ngModel]="filmLanguage()" (ngModelChange)="filmLanguage.set($event)" class="filter-select">
+            <option [ngValue]="null">{{ t('filter.allLanguages') }}</option>
+            <option value="fr">{{ t('filter.lang.fr') }}</option>
+            <option value="en">{{ t('filter.lang.en') }}</option>
+            <option value="ja">{{ t('filter.lang.ja') }}</option>
+            <option value="ko">{{ t('filter.lang.ko') }}</option>
+            <option value="es">{{ t('filter.lang.es') }}</option>
+            <option value="de">{{ t('filter.lang.de') }}</option>
+            <option value="it">{{ t('filter.lang.it') }}</option>
+            <option value="pt">{{ t('filter.lang.pt') }}</option>
+            <option value="hi">{{ t('filter.lang.hi') }}</option>
+            <option value="zh">{{ t('filter.lang.zh') }}</option>
+            <option value="ru">{{ t('filter.lang.ru') }}</option>
+            <option value="sv">{{ t('filter.lang.sv') }}</option>
+            <option value="tr">{{ t('filter.lang.tr') }}</option>
+          </select>
+
+          @if (hasActiveFilmFilters()) {
+            <button class="btn-reset" (click)="resetFilmFilters()">{{ t('search.reset') }}</button>
+          }
+        </div>
+      }
 
       <!-- Results area -->
       <div class="results-area" [class.is-loading]="loading() && displayedDirectors().length > 0">
@@ -118,11 +179,11 @@ const MAX_TMDB_PAGES = 500;     // Higher cap for directors since they are spars
               />
               <div>
                 <h2>{{ selectedDirector()!.name }}</h2>
-                <p class="filmography-count">{{ directorMovies().length }} {{ t('director.films') }}</p>
+                <p class="filmography-count">{{ filteredFilmography().length }} {{ t('director.films') }}</p>
               </div>
             </div>
             <div class="movie-grid">
-              @for (movie of directorMovies(); track movie.id) {
+              @for (movie of filteredFilmography(); track movie.id) {
                 <app-movie-card [movie]="movie" />
               }
             </div>
@@ -220,6 +281,14 @@ export class DirectorResultsComponent implements OnInit {
   selectedDirector = signal<Person | null>(null);
   directorMovies = signal<Movie[]>([]);
 
+  // --- Filmography filters (when person selected) ---
+  genres = signal<Genre[]>([]);
+  filmGenre = signal<number | null>(null);
+  filmDecade = signal<string | null>(null);
+  filmRating = signal<number | null>(null);
+  filmSort = signal<string>('popularity');
+  filmLanguage = signal<string | null>(null);
+
   // --- Loading ---
   loading = signal(false);
   batchLoading = signal(false);
@@ -254,6 +323,39 @@ export class DirectorResultsComponent implements OnInit {
     this.selectedSort() !== 'popularity'
   );
 
+  filteredFilmography = computed(() => {
+    let movies = this.directorMovies();
+    const genre = this.filmGenre();
+    if (genre) movies = movies.filter(m => m.genre_ids?.includes(genre));
+    const decade = this.filmDecade();
+    if (decade) {
+      const y = parseInt(decade, 10);
+      if (y === 1900) {
+        movies = movies.filter(m => { const yr = parseInt(m.release_date?.substring(0, 4), 10); return yr > 0 && yr < 1960; });
+      } else {
+        movies = movies.filter(m => { const yr = parseInt(m.release_date?.substring(0, 4), 10); return yr >= y && yr <= y + 9; });
+      }
+    }
+    const rating = this.filmRating();
+    if (rating) movies = movies.filter(m => m.vote_average >= rating);
+    const lang = this.filmLanguage();
+    if (lang) movies = movies.filter(m => m.original_language === lang);
+    const sort = this.filmSort();
+    return [...movies].sort((a, b) => {
+      if (sort === 'vote_average') return b.vote_average - a.vote_average;
+      if (sort === 'recent') return (b.release_date || '').localeCompare(a.release_date || '');
+      return b.popularity - a.popularity;
+    });
+  });
+
+  hasActiveFilmFilters = computed(() =>
+    this.filmGenre() !== null ||
+    this.filmDecade() !== null ||
+    this.filmRating() !== null ||
+    this.filmSort() !== 'popularity' ||
+    this.filmLanguage() !== null
+  );
+
   modeTitle = computed(() => {
     switch (this.mode()) {
       case 'popular': return this.t('director.popularTitle');
@@ -273,6 +375,8 @@ export class DirectorResultsComponent implements OnInit {
       clearTimeout(this.searchTimeout);
       this.activeRequest?.unsubscribe();
     });
+
+    this.movieService.getGenres().subscribe(res => this.genres.set(res.genres));
 
     const personId = this.route.snapshot.queryParamMap.get('personId');
     if (personId && this.route.snapshot.queryParamMap.get('tab') === 'director') {
@@ -424,6 +528,14 @@ export class DirectorResultsComponent implements OnInit {
     this.onFilterChange();
   }
 
+  resetFilmFilters(): void {
+    this.filmGenre.set(null);
+    this.filmDecade.set(null);
+    this.filmRating.set(null);
+    this.filmSort.set('popularity');
+    this.filmLanguage.set(null);
+  }
+
   // ==================================================
   //  Pagination — always client-side
   // ==================================================
@@ -529,5 +641,6 @@ export class DirectorResultsComponent implements OnInit {
   clearSelection(): void {
     this.selectedDirector.set(null);
     this.directorMovies.set([]);
+    this.resetFilmFilters();
   }
 }
