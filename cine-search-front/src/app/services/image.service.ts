@@ -19,4 +19,8 @@ export class ImageService {
   getProfileUrl(path: string | null, size: ImageSize = 'w185'): string {
     return path ? `${this.baseUrl}/${size}${path}` : 'assets/no-profile.svg';
   }
+
+  getLogoUrl(path: string | null, size: ImageSize = 'w92'): string {
+    return path ? `${this.baseUrl}/${size}${path}` : '';
+  }
 }

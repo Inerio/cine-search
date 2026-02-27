@@ -172,4 +172,10 @@ export const EN: Record<string, string> = {
   "detail.cast": "Main cast",
   "detail.directedBy": "Directed by",
   "detail.votes": "votes",
+  "detail.whereToWatch": "Where to watch",
+  "detail.streaming": "Streaming",
+  "detail.rent": "Rent",
+  "detail.buy": "Buy",
+  "detail.poweredByJustWatch": "Data by JustWatch",
+  "detail.noProviders": "Search where to watch this movie",
 };

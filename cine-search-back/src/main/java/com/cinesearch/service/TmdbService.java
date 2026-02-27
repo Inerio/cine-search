@@ -1,11 +1,15 @@
 package com.cinesearch.service;
 
 import com.cinesearch.dto.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
 
 /**
  * Proxy service for the TMDB (The Movie Database) API.
@@ -18,11 +22,14 @@ public class TmdbService {
 
     private final WebClient webClient;
     private final String apiKey;
+    private final ObjectMapper objectMapper;
 
     public TmdbService(@Qualifier("tmdbWebClient") WebClient webClient,
-                       @Value("${tmdb.api.key}") String apiKey) {
+                       @Value("${tmdb.api.key}") String apiKey,
+                       ObjectMapper objectMapper) {
         this.webClient = webClient;
         this.apiKey = apiKey;
+        this.objectMapper = objectMapper;
     }
 
     @Cacheable(value = "trending", key = "#lang + '-' + #page")
@@ -270,5 +277,58 @@ public class TmdbService {
                 .retrieve()
                 .bodyToMono(GenreListResponse.class)
                 .block();
+    }
+
+    /** Returns watch providers (streaming/rent/buy) for a movie in the given region. */
+    @Cacheable(value = "watchProviders", key = "#movieId + '-' + #lang")
+    public WatchProvidersResponse getWatchProviders(Long movieId, String lang) {
+        try {
+            JsonNode root = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/movie/{id}/watch/providers")
+                            .queryParam("api_key", apiKey)
+                            .build(movieId))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .block();
+
+            if (root == null) {
+                return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
+            }
+
+            String region = extractRegion(lang);
+            JsonNode regionNode = root.path("results").path(region);
+
+            if (regionNode.isMissingNode()) {
+                return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
+            }
+
+            String link = regionNode.has("link") ? regionNode.get("link").asText() : null;
+            List<WatchProvidersResponse.ProviderDto> flatrate = parseProviders(regionNode.path("flatrate"));
+            List<WatchProvidersResponse.ProviderDto> rent = parseProviders(regionNode.path("rent"));
+            List<WatchProvidersResponse.ProviderDto> buy = parseProviders(regionNode.path("buy"));
+            return new WatchProvidersResponse(link, flatrate, rent, buy);
+        } catch (Exception e) {
+            return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
+        }
+    }
+
+    private List<WatchProvidersResponse.ProviderDto> parseProviders(JsonNode node) {
+        if (node == null || node.isMissingNode() || !node.isArray()) return List.of();
+        try {
+            return objectMapper.convertValue(node,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, WatchProvidersResponse.ProviderDto.class));
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private String extractRegion(String lang) {
+        if (lang != null && lang.contains("-")) {
+            return lang.substring(lang.indexOf('-') + 1).toUpperCase();
+        }
+        if ("fr".equalsIgnoreCase(lang)) return "FR";
+        if ("en".equalsIgnoreCase(lang)) return "US";
+        return "FR";
     }
 }

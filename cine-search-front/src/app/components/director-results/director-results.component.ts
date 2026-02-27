@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable, forkJoin, Subscription } from 'rxjs';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
@@ -257,6 +257,7 @@ export class DirectorResultsComponent implements OnInit {
   private movieService = inject(MovieService);
   private ts = inject(TranslationService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   imageService = inject(ImageService);
 
@@ -617,6 +618,14 @@ export class DirectorResultsComponent implements OnInit {
     this.selectedDirector.set(director);
     this.loading.set(true);
 
+    // Persist personId in URL so back-navigation restores the director
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { personId: director.id },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+
     this.activeRequest?.unsubscribe();
     this.activeRequest = this.movieService.getPersonMovies(director.id).subscribe({
       next: res => {
@@ -642,5 +651,13 @@ export class DirectorResultsComponent implements OnInit {
     this.selectedDirector.set(null);
     this.directorMovies.set([]);
     this.resetFilmFilters();
+
+    // Remove personId from URL
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { personId: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 }

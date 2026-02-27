@@ -10,6 +10,7 @@ import {
   Person,
   PersonSearchResponse,
   PersonCreditsResponse,
+  WatchProviders,
   AiSearchResponse
 } from '../models/movie.model';
 
@@ -79,6 +80,12 @@ export class MovieService {
     if (filters.decadeStart) params = params.set('decadeStart', filters.decadeStart);
     if (filters.decadeEnd) params = params.set('decadeEnd', filters.decadeEnd);
     return this.http.get<MovieListResponse>(`${this.apiUrl}/movies/discover`, { params });
+  }
+
+  getWatchProviders(movieId: number): Observable<WatchProviders> {
+    return this.http.get<WatchProviders>(`${this.apiUrl}/movies/${movieId}/watch-providers`, {
+      params: new HttpParams().set('lang', this.lang)
+    });
   }
 
   getGenres(): Observable<GenreListResponse> {

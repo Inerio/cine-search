@@ -99,6 +99,21 @@ export interface PersonCreditsResponse {
   crew: Movie[];
 }
 
+// --- Watch Providers ---
+
+export interface WatchProviders {
+  link: string;
+  flatrate: Provider[] | null;
+  rent: Provider[] | null;
+  buy: Provider[] | null;
+}
+
+export interface Provider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+}
+
 // --- AI Parse ---
 
 export interface AiMovieQuery {

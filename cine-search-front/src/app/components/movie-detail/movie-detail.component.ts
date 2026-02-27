@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
-import { MovieDetail, CastMember, CrewMember } from '../../models/movie.model';
+import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../models/movie.model';
 
 @Component({
   selector: 'app-movie-detail',
@@ -90,6 +90,53 @@ import { MovieDetail, CastMember, CrewMember } from '../../models/movie.model';
               <span class="director-name">{{ directorInfo()!.name }}</span>
             </div>
           }
+
+          @if (watchProviders(); as wp) {
+            <section class="watch-providers">
+              <h3>{{ t('detail.whereToWatch') }}</h3>
+              @if (wp.flatrate?.length) {
+                <div class="provider-group">
+                  <span class="provider-label">{{ t('detail.streaming') }}</span>
+                  <div class="provider-logos">
+                    @for (p of wp.flatrate; track p.provider_id) {
+                      <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                    }
+                  </div>
+                </div>
+              }
+              @if (wp.rent?.length) {
+                <div class="provider-group">
+                  <span class="provider-label">{{ t('detail.rent') }}</span>
+                  <div class="provider-logos">
+                    @for (p of wp.rent; track p.provider_id) {
+                      <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                    }
+                  </div>
+                </div>
+              }
+              @if (wp.buy?.length) {
+                <div class="provider-group">
+                  <span class="provider-label">{{ t('detail.buy') }}</span>
+                  <div class="provider-logos">
+                    @for (p of wp.buy; track p.provider_id) {
+                      <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                    }
+                  </div>
+                </div>
+              }
+              <div class="provider-footer">
+                <a [href]="getWatchSearchUrl()" target="_blank" rel="noopener" class="no-providers-link">
+                  <span class="search-icon">&#128269;</span>
+                  {{ t('detail.noProviders') }}
+                </a>
+                @if (wp.link) {
+                  <a [href]="wp.link" target="_blank" rel="noopener" class="provider-credit">
+                    {{ t('detail.poweredByJustWatch') }}
+                  </a>
+                }
+              </div>
+            </section>
+          }
         </div>
       </div>
     } @else {
@@ -110,6 +157,7 @@ export class MovieDetailComponent implements OnInit {
   movie = signal<MovieDetail | null>(null);
   topCast = signal<CastMember[]>([]);
   directorInfo = signal<CrewMember | null>(null);
+  watchProviders = signal<WatchProviders | null>(null);
 
   private movieId = 0;
   private activeRequest?: Subscription;
@@ -143,6 +191,10 @@ export class MovieDetailComponent implements OnInit {
         this.directorInfo.set(dir ?? null);
       }
     });
+    this.movieService.getWatchProviders(id).subscribe({
+      next: wp => this.watchProviders.set(wp),
+      error: () => this.watchProviders.set(null)
+    });
   }
 
   goBack(): void {
@@ -162,6 +214,14 @@ export class MovieDetailComponent implements OnInit {
         queryParams: { tab: 'director', personId: dir.id }
       });
     }
+  }
+
+  getWatchSearchUrl(): string {
+    const m = this.movie();
+    if (!m) return '#';
+    const keyword = this.ts.lang() === 'fr' ? 'regarder' : 'watch';
+    const query = encodeURIComponent(`${keyword} ${m.title} streaming`);
+    return `https://www.google.com/search?q=${query}`;
   }
 
   formatRuntime(minutes: number): string {

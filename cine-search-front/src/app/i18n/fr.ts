@@ -173,4 +173,10 @@ export const FR: Record<string, string> = {
   "detail.cast": "Casting principal",
   "detail.directedBy": "Réalisé par",
   "detail.votes": "votes",
+  "detail.whereToWatch": "Où regarder",
+  "detail.streaming": "Streaming",
+  "detail.rent": "Location",
+  "detail.buy": "Achat",
+  "detail.poweredByJustWatch": "Données JustWatch",
+  "detail.noProviders": "Rechercher où regarder ce film",
 };

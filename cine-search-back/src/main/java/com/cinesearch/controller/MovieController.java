@@ -3,6 +3,7 @@ package com.cinesearch.controller;
 import com.cinesearch.dto.GenreListResponse;
 import com.cinesearch.dto.MovieDetailDto;
 import com.cinesearch.dto.MovieListResponse;
+import com.cinesearch.dto.WatchProvidersResponse;
 import com.cinesearch.service.TmdbService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -71,5 +72,12 @@ public class MovieController {
     public ResponseEntity<GenreListResponse> getGenres(
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getGenres(lang));
+    }
+
+    @GetMapping("/{id}/watch-providers")
+    public ResponseEntity<WatchProvidersResponse> getWatchProviders(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getWatchProviders(id, lang));
     }
 }

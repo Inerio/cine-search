@@ -9,7 +9,7 @@
   right: 0;
   height: 60vh;
   background-size: cover;
-  background-position: center top;
+  background-position: center 20%;
   z-index: 0;
 
   .backdrop-overlay {
@@ -251,6 +251,95 @@
   }
 }
 
+.watch-providers {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+
+  .provider-group {
+    margin-bottom: 1rem;
+
+    .provider-label {
+      display: block;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .provider-logos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+  }
+
+  .provider-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .provider-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .provider-credit {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.72rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .no-providers-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+
+    .search-icon {
+      font-size: 0.9rem;
+    }
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
 // Override global loader for full-page detail loading state
 .loader {
   padding: 8rem 0;
@@ -367,6 +456,12 @@
       padding: 0.8rem;
       min-height: 44px;
     }
+  }
+
+  .watch-providers .provider-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
   }
 }
 
