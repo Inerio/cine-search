@@ -1,0 +1,598 @@
+.detail-page {
+  position: relative;
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60vh;
+  background-size: cover;
+  background-position: center top;
+  z-index: 0;
+
+  .backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(7, 7, 13, 0.5) 0%,
+      rgba(7, 7, 13, 0.85) 60%,
+      rgba(7, 7, 13, 1) 100%
+    );
+  }
+}
+
+.detail-content {
+  position: relative;
+  z-index: 1;
+  padding: 1rem 3rem 4rem;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #fff;
+  }
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 3rem;
+  margin-bottom: 3rem;
+
+  .detail-poster {
+    width: 300px;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+  }
+
+  .detail-info {
+    flex: 1;
+    padding-top: 1rem;
+  }
+}
+
+.title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 0.5rem;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.tagline {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.05rem;
+  font-style: italic;
+  margin: 0 0 1.2rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  flex-wrap: wrap;
+
+  .rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 600;
+    color: #fff;
+
+    .star {
+      color: #fbbf24;
+      font-size: 1.1rem;
+    }
+
+    .vote-count {
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 400;
+      font-size: 0.85rem;
+    }
+  }
+
+  .separator {
+    color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.8rem;
+
+  .genre-tag {
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    background: rgba(165, 29, 29, 0.15);
+    border: 1px solid rgba(165, 29, 29, 0.3);
+    color: #dc2626;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+}
+
+.synopsis {
+  h3 {
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.6rem;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+}
+
+// --- Creators ---
+
+.creators {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 1rem;
+
+  .creators-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.9rem;
+  }
+
+  .creator-name {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+// --- Networks ---
+
+.networks-section {
+  margin-bottom: 2rem;
+
+  h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+}
+
+.networks-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.network-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  .network-logo {
+    height: 28px;
+    max-width: 100px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+  }
+
+  .network-name-only {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+}
+
+// --- Cast ---
+
+.cast-section {
+  margin-bottom: 2rem;
+
+  h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1.2rem;
+  }
+}
+
+.cast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.cast-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.2s ease;
+  padding: 0.6rem;
+  border-radius: 12px;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+
+      .cast-photo {
+        border-color: rgba(165, 29, 29, 0.4);
+      }
+
+      .cast-name {
+        color: #dc2626;
+      }
+    }
+  }
+
+  .cast-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 0.6rem;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    transition: border-color 0.2s ease;
+  }
+
+  .cast-info {
+    display: flex;
+    flex-direction: column;
+
+    .cast-name {
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .cast-character {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.78rem;
+    }
+  }
+}
+
+// --- Seasons ---
+
+.seasons-section {
+  margin-bottom: 2rem;
+
+  h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1.2rem;
+  }
+}
+
+.seasons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.season-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateY(-2px);
+  }
+
+  .season-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+  }
+
+  .season-info {
+    padding: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .season-name {
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .season-meta {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.75rem;
+    }
+
+    .season-date {
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 0.72rem;
+    }
+  }
+}
+
+// --- Watch Providers ---
+
+.watch-providers {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  h3 {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+
+  .provider-group {
+    margin-bottom: 1rem;
+
+    .provider-label {
+      display: block;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .provider-logos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+  }
+
+  .provider-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  .provider-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .provider-credit {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.72rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .no-providers-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+
+    .search-icon {
+      font-size: 0.9rem;
+    }
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+.loader {
+  padding: 8rem 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+}
+
+// Tablet
+@media (max-width: 1024px) {
+  .detail-content {
+    padding: 1rem 2rem 3rem;
+  }
+
+  .detail-header {
+    gap: 2rem;
+
+    .detail-poster {
+      width: 250px;
+    }
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .seasons-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+
+// Mobile
+@media (max-width: 768px) {
+  .backdrop {
+    height: 40vh;
+  }
+
+  .detail-content {
+    padding: 0.8rem 1rem 3rem;
+  }
+
+  .back-btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .detail-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+
+    .detail-poster {
+      width: 180px;
+    }
+
+    .detail-info {
+      padding-top: 0;
+      text-align: center;
+    }
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .tagline {
+    font-size: 0.9rem;
+  }
+
+  .meta {
+    justify-content: center;
+    font-size: 0.85rem;
+  }
+
+  .genres {
+    justify-content: center;
+  }
+
+  .synopsis p {
+    font-size: 0.9rem;
+  }
+
+  .creators {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .cast-card {
+    padding: 0.4rem;
+
+    .cast-photo {
+      width: 60px;
+      height: 60px;
+    }
+
+    .cast-info .cast-name {
+      font-size: 0.78rem;
+    }
+
+    .cast-info .cast-character {
+      font-size: 0.7rem;
+    }
+  }
+
+  .seasons-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .watch-providers .provider-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+}
+
+// Small phones
+@media (max-width: 480px) {
+  .detail-header .detail-poster {
+    width: 150px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .cast-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .seasons-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// Touch devices
+@media (hover: none) and (pointer: coarse) {
+  .cast-card.clickable:hover {
+    transform: none;
+    background: none;
+  }
+}

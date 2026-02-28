@@ -54,6 +54,26 @@
   }
 }
 
+// Media type badge (Film/Série) — shown only on AI search results
+.media-type-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(59, 130, 246, 0.9);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  z-index: 2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+
+  &.tv {
+    background: rgba(139, 92, 246, 0.9);
+  }
+}
+
 .overlay {
   position: absolute;
   inset: 0;

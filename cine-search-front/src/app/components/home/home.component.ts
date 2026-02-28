@@ -83,7 +83,7 @@ export class HomeComponent implements OnInit {
 
   private backdropUrls: string[] = [];
   private currentIndex = 0;
-  private slideshowInterval: any;
+  private slideshowInterval: ReturnType<typeof setInterval> | undefined;
 
   private static readonly SLIDE_DURATION = 8000;
 

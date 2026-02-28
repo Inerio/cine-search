@@ -15,7 +15,8 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
-                "trending", "popular", "popularPersons", "trendingPersons", "genres", "watchProviders");
+                "trending", "popular", "popularPersons", "trendingPersons", "genres", "watchProviders",
+                "trendingTv", "tvGenres", "tvWatchProviders");
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .maximumSize(500)
                 .expireAfterWrite(10, TimeUnit.MINUTES));

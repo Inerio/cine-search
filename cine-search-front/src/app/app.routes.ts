@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/movie-detail/movie-detail.component').then(m => m.MovieDetailComponent)
   },
   {
+    path: 'tv/:id',
+    loadComponent: () => import('./components/tv-detail/tv-detail.component').then(m => m.TvDetailComponent)
+  },
+  {
     path: '**',
     redirectTo: ''
   }

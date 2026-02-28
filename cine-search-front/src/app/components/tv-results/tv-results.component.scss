@@ -1,0 +1,100 @@
+// TV Results component styles — mirrors search.component.scss for consistency
+
+.search-section {
+  .filters {
+    gap: 0.8rem;
+    align-items: flex-start;
+  }
+}
+
+// Reset button — ghost style (matches Film tab)
+.search-section .btn-reset {
+  border: none;
+  background: none;
+  color: var(--color-text-faint);
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius-md);
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+// Filters toggle button (hidden on desktop, visible on mobile)
+.filters-toggle {
+  display: none;
+}
+
+.default-section {
+  .default-title {
+    margin: 0 0 1.5rem;
+  }
+}
+
+.results-count {
+  margin-bottom: 1.2rem;
+}
+
+// Tablet
+@media (max-width: 1024px) {
+  :host {
+    padding: 0;
+  }
+}
+
+// Mobile
+@media (max-width: 768px) {
+  // Filters toggle button visible on mobile
+  .filters-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text-dimmed);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+
+    &:hover {
+      border-color: var(--color-border-hover);
+    }
+
+    .filter-count {
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      margin-left: auto;
+    }
+  }
+
+  // Collapsible filters
+  .filters.filters-collapsed {
+    display: none;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+}
+
+// Small phones
+@media (max-width: 480px) {
+  .filters-toggle {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+  }
+}

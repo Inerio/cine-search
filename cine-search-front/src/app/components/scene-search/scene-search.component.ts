@@ -18,6 +18,11 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
       </div>
 
       <div class="prompt-area">
+        <div class="media-type-selector">
+          <button class="media-type-btn" [class.active]="mediaType() === 'all'" (click)="mediaType.set('all')">{{ t('scene.mediaAll') }}</button>
+          <button class="media-type-btn" [class.active]="mediaType() === 'movie'" (click)="mediaType.set('movie')">{{ t('scene.mediaMovie') }}</button>
+          <button class="media-type-btn" [class.active]="mediaType() === 'tv'" (click)="mediaType.set('tv')">{{ t('scene.mediaTv') }}</button>
+        </div>
         <textarea
           [ngModel]="description()"
           (ngModelChange)="description.set($event)"
@@ -52,6 +57,9 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
       @if (parsedQuery() && !loading()) {
         <div class="parsed-results">
           <span class="parsed-badge">{{ intentLabel(parsedQuery()!.intent) }}</span>
+          @if (parsedQuery()!.type) {
+            <span class="parsed-tag type-tag">{{ parsedQuery()!.type === 'tv' ? t('scene.typeTV') : t('scene.typeMovie') }}</span>
+          }
           @if (parsedQuery()!.confidence) {
             <span class="confidence-indicator" [class]="'confidence-' + parsedQuery()!.confidence">
               {{ confidenceLabel(parsedQuery()!.confidence!) }}
@@ -81,7 +89,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
         <div class="best-match-section">
           <h3>{{ t('scene.bestMatch') }}</h3>
           <div class="best-match-card">
-            <app-movie-card [movie]="bestMatch()!" />
+            <app-movie-card [movie]="bestMatch()!" [showMediaBadge]="true" />
           </div>
         </div>
       }
@@ -92,7 +100,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
           <h3>{{ t('scene.similarMovies') }}</h3>
           <div class="movie-grid">
             @for (movie of similarMovies(); track movie.id) {
-              <app-movie-card [movie]="movie" />
+              <app-movie-card [movie]="movie" [showMediaBadge]="true" />
             }
           </div>
         </div>
@@ -105,7 +113,7 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
         </div>
         <div class="movie-grid">
           @for (movie of results(); track movie.id) {
-            <app-movie-card [movie]="movie" />
+            <app-movie-card [movie]="movie" [showMediaBadge]="true" />
           }
         </div>
       }
@@ -129,6 +137,7 @@ export class SceneSearchComponent {
   private ts = inject(TranslationService);
 
   description = signal('');
+  mediaType = signal<string>('all');
   results = signal<Movie[]>([]);
   bestMatch = signal<Movie | null>(null);
   similarMovies = signal<Movie[]>([]);
@@ -156,7 +165,7 @@ export class SceneSearchComponent {
     this.bestMatch.set(null);
     this.similarMovies.set([]);
 
-    this.movieService.aiParse(desc).subscribe({
+    this.movieService.aiParse(desc, this.mediaType()).subscribe({
       next: response => {
         this.parsedQuery.set(response.parsed);
         this.bestMatch.set(response.bestMatch);

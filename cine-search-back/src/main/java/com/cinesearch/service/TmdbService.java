@@ -323,6 +323,199 @@ public class TmdbService {
         }
     }
 
+    // ─── TV SHOW METHODS ──────────────────────────────────────────────────
+
+    @Cacheable(value = "trendingTv", key = "#lang + '-' + #page")
+    public MovieListResponse getTrendingTv(int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/trending/tv/week")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    public MovieListResponse searchTv(String query, int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/search/tv")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .queryParam("query", query)
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    public MovieListResponse searchMulti(String query, int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/search/multi")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .queryParam("query", query)
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    public TvDetailDto getTvDetail(Long tvId, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/tv/{id}")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .queryParam("append_to_response", "credits")
+                        .build(tvId))
+                .retrieve()
+                .bodyToMono(TvDetailDto.class)
+                .block();
+    }
+
+    /**
+     * Full discover endpoint for TV shows with all TMDB filters.
+     * Note: no directorId support (TMDB doesn't support with_crew for TV).
+     * Uses first_air_date instead of primary_release_date.
+     */
+    public MovieListResponse discoverTvAdvanced(Integer genreId, Double minRating,
+                                                  String originalLanguage, String sortBy,
+                                                  Integer runtimeGte, Integer runtimeLte,
+                                                  String decadeStart, String decadeEnd,
+                                                  int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/discover/tv")
+                            .queryParam("api_key", apiKey)
+                            .queryParam("language", lang)
+                            .queryParam("sort_by", sortBy != null ? sortBy : "popularity.desc")
+                            .queryParam("page", page);
+                    if (genreId != null) {
+                        uriBuilder.queryParam("with_genres", genreId);
+                    }
+                    if (decadeStart != null && decadeEnd != null) {
+                        uriBuilder.queryParam("first_air_date.gte", decadeStart);
+                        uriBuilder.queryParam("first_air_date.lte", decadeEnd);
+                    }
+                    if (minRating != null) {
+                        uriBuilder.queryParam("vote_average.gte", minRating);
+                        uriBuilder.queryParam("vote_count.gte", 50);
+                    }
+                    if (originalLanguage != null) {
+                        uriBuilder.queryParam("with_original_language", originalLanguage);
+                    }
+                    if (runtimeGte != null) {
+                        uriBuilder.queryParam("with_runtime.gte", runtimeGte);
+                    }
+                    if (runtimeLte != null) {
+                        uriBuilder.queryParam("with_runtime.lte", runtimeLte);
+                    }
+                    return uriBuilder.build();
+                })
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    /** Discover TV with comma-separated genre IDs for AI search. */
+    public MovieListResponse discoverTvWithGenreIds(String genreIds, Integer year, Double minRating,
+                                                      String originalLanguage, String sortBy,
+                                                      int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/discover/tv")
+                            .queryParam("api_key", apiKey)
+                            .queryParam("language", lang)
+                            .queryParam("sort_by", sortBy != null ? sortBy : "popularity.desc")
+                            .queryParam("page", page);
+                    if (genreIds != null && !genreIds.isBlank()) {
+                        uriBuilder.queryParam("with_genres", genreIds);
+                    }
+                    if (year != null) {
+                        uriBuilder.queryParam("first_air_date_year", year);
+                    }
+                    if (minRating != null) {
+                        uriBuilder.queryParam("vote_average.gte", minRating);
+                        uriBuilder.queryParam("vote_count.gte", 50);
+                    }
+                    if (originalLanguage != null) {
+                        uriBuilder.queryParam("with_original_language", originalLanguage);
+                    }
+                    return uriBuilder.build();
+                })
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    public MovieListResponse getSimilarTv(Long tvId, int page, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/tv/{id}/similar")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .queryParam("page", page)
+                        .build(tvId))
+                .retrieve()
+                .bodyToMono(MovieListResponse.class)
+                .block();
+    }
+
+    @Cacheable(value = "tvGenres", key = "#lang")
+    public GenreListResponse getTvGenres(String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/genre/tv/list")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .build())
+                .retrieve()
+                .bodyToMono(GenreListResponse.class)
+                .block();
+    }
+
+    @Cacheable(value = "tvWatchProviders", key = "#tvId + '-' + #lang")
+    public WatchProvidersResponse getTvWatchProviders(Long tvId, String lang) {
+        try {
+            JsonNode root = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/tv/{id}/watch/providers")
+                            .queryParam("api_key", apiKey)
+                            .build(tvId))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .block();
+
+            if (root == null) {
+                return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
+            }
+
+            String region = extractRegion(lang);
+            JsonNode regionNode = root.path("results").path(region);
+
+            if (regionNode.isMissingNode()) {
+                return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
+            }
+
+            String link = regionNode.has("link") ? regionNode.get("link").asText() : null;
+            List<WatchProvidersResponse.ProviderDto> flatrate = parseProviders(regionNode.path("flatrate"));
+            List<WatchProvidersResponse.ProviderDto> rent = parseProviders(regionNode.path("rent"));
+            List<WatchProvidersResponse.ProviderDto> buy = parseProviders(regionNode.path("buy"));
+            return new WatchProvidersResponse(link, flatrate, rent, buy);
+        } catch (Exception e) {
+            return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
+        }
+    }
+
+    // ─── PRIVATE HELPERS ─────────────────────────────────────────────────
+
     private String extractRegion(String lang) {
         if (lang != null && lang.contains("-")) {
             return lang.substring(lang.indexOf('-') + 1).toUpperCase();

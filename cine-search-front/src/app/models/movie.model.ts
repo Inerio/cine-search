@@ -13,6 +13,53 @@ export interface Movie {
   genre_ids: number[];
   original_language: string;
   job?: string; // Present in crew credits (e.g. "Director")
+  media_type?: 'movie' | 'tv' | 'person';
+}
+
+// --- TV Detail ---
+
+export interface TvDetail {
+  id: number;
+  name: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  first_air_date: string;
+  last_air_date: string;
+  vote_average: number;
+  vote_count: number;
+  episode_run_time: number[];
+  number_of_seasons: number;
+  number_of_episodes: number;
+  tagline: string;
+  status: string;
+  genres: Genre[];
+  seasons: TvSeason[];
+  networks: TvNetwork[];
+  created_by: TvCreator[];
+  credits: Credits;
+}
+
+export interface TvSeason {
+  id: number;
+  name: string;
+  season_number: number;
+  episode_count: number;
+  poster_path: string | null;
+  air_date: string;
+  overview: string;
+}
+
+export interface TvNetwork {
+  id: number;
+  name: string;
+  logo_path: string | null;
+}
+
+export interface TvCreator {
+  id: number;
+  name: string;
+  profile_path: string | null;
 }
 
 export interface MovieListResponse {

@@ -16,6 +16,7 @@ export const FR: Record<string, string> = {
 
   // --- Search tabs ---
   "search.tab.movie": "Film",
+  "search.tab.tv": "Série",
   "search.tab.actor": "Acteur",
   "search.tab.director": "Réalisateur",
   "search.tab.advanced": "Recherche avancée",
@@ -87,6 +88,11 @@ export const FR: Record<string, string> = {
   "scene.confidenceHigh": "Confiance élevée",
   "scene.confidenceMedium": "Confiance moyenne",
   "scene.confidenceLow": "Confiance faible",
+  "scene.mediaAll": "Les deux",
+  "scene.mediaMovie": "Film",
+  "scene.mediaTv": "Série",
+  "scene.typeTV": "Série TV",
+  "scene.typeMovie": "Film",
 
   // --- Actor ---
   "actor.placeholder": "Rechercher un acteur...",
@@ -179,4 +185,29 @@ export const FR: Record<string, string> = {
   "detail.buy": "Achat",
   "detail.poweredByJustWatch": "Données JustWatch",
   "detail.noProviders": "Rechercher où regarder ce film",
+
+  // --- TV Shows ---
+  "tv.placeholder": "Rechercher une série...",
+  "tv.trending": "Tendances",
+  "tv.trendingTitle": "Séries du moment",
+  "tv.noResults": "Aucune série trouvée",
+
+  // --- TV Detail ---
+  "tvDetail.back": "Retour",
+  "tvDetail.synopsis": "Synopsis",
+  "tvDetail.noSynopsis": "Aucun synopsis disponible.",
+  "tvDetail.cast": "Casting principal",
+  "tvDetail.createdBy": "Créée par",
+  "tvDetail.seasons": "Saisons",
+  "tvDetail.episodes": "épisodes",
+  "tvDetail.networks": "Diffusée sur",
+  "tvDetail.votes": "votes",
+  "tvDetail.whereToWatch": "Où regarder",
+  "tvDetail.streaming": "Streaming",
+  "tvDetail.rent": "Location",
+  "tvDetail.buy": "Achat",
+  "tvDetail.poweredByJustWatch": "Données JustWatch",
+  "tvDetail.noProviders": "Rechercher où regarder cette série",
+  "tvDetail.seasonCount": "saisons",
+  "tvDetail.episodeCount": "épisodes",
 };

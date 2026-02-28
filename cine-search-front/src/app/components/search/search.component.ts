@@ -6,23 +6,25 @@ import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { SceneSearchComponent } from '../scene-search/scene-search.component';
 import { ActorResultsComponent } from '../actor-results/actor-results.component';
 import { DirectorResultsComponent } from '../director-results/director-results.component';
+import { TvResultsComponent } from '../tv-results/tv-results.component';
 import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
 import { Movie, Genre, Person } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
 
-type SearchTab = 'movie' | 'actor' | 'director' | 'scene';
+type SearchTab = 'movie' | 'tv' | 'actor' | 'director' | 'scene';
 type SearchMode = 'none' | 'text' | 'discover';
 
 @Component({
   selector: 'app-search',
   standalone: true,
-  imports: [FormsModule, MovieCardComponent, SceneSearchComponent, ActorResultsComponent, DirectorResultsComponent],
+  imports: [FormsModule, MovieCardComponent, SceneSearchComponent, ActorResultsComponent, DirectorResultsComponent, TvResultsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="search-page">
       <div class="tabs">
         <button class="tab" [class.active]="activeTab() === 'movie'" (click)="setTab('movie')">{{ t('search.tab.movie') }}</button>
+        <button class="tab" [class.active]="activeTab() === 'tv'" (click)="setTab('tv')">{{ t('search.tab.tv') }}</button>
         <button class="tab" [class.active]="activeTab() === 'actor'" (click)="setTab('actor')">{{ t('search.tab.actor') }}</button>
         <button class="tab" [class.active]="activeTab() === 'director'" (click)="setTab('director')">{{ t('search.tab.director') }}</button>
         <button class="tab" [class.active]="activeTab() === 'scene'" (click)="setTab('scene')">{{ t('search.tab.advanced') }}</button>
@@ -234,6 +236,10 @@ type SearchMode = 'none' | 'text' | 'discover';
             }
           </div>
         </div>
+      }
+
+      @if (activeTab() === 'tv') {
+        <app-tv-results />
       }
 
       @if (activeTab() === 'actor') {

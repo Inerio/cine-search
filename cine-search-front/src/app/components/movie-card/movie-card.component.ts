@@ -23,6 +23,11 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
           <span class="star">&#9733;</span>
           {{ movie().vote_average | number:'1.1-1' }}
         </div>
+        @if (showMediaBadge() && movie().media_type) {
+          <div class="media-type-badge" [class.tv]="movie().media_type === 'tv'">
+            {{ movie().media_type === 'tv' ? 'Série' : 'Film' }}
+          </div>
+        }
         <div class="overlay">
           <div class="rating">
             <span class="star">&#9733;</span>
@@ -42,6 +47,8 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
 })
 export class MovieCardComponent {
   movie = input.required<Movie>();
+  linkPrefix = input<string>();
+  showMediaBadge = input(false);
   imageService = inject(ImageService);
   private router = inject(Router);
   private ts = inject(TranslationService);
@@ -49,6 +56,7 @@ export class MovieCardComponent {
   t(key: string): string { return this.ts.t(key); }
 
   goToDetail(): void {
-    this.router.navigate(['/movie', this.movie().id]);
+    const prefix = this.linkPrefix() || (this.movie().media_type === 'tv' ? '/tv' : '/movie');
+    this.router.navigate([prefix, this.movie().id]);
   }
 }

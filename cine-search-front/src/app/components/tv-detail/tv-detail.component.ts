@@ -5,66 +5,104 @@ import { Subscription } from 'rxjs';
 import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
-import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../models/movie.model';
+import { TvDetail, CastMember, WatchProviders } from '../../models/movie.model';
 
 @Component({
-  selector: 'app-movie-detail',
+  selector: 'app-tv-detail',
   standalone: true,
   imports: [DecimalPipe, SlicePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if (movie(); as m) {
+    @if (show(); as s) {
       <div class="detail-page">
-        <div class="backdrop" [style.background-image]="'url(' + imageService.getBackdropUrl(m.backdrop_path, 'original') + ')'">
+        <div class="backdrop" [style.background-image]="'url(' + imageService.getBackdropUrl(s.backdrop_path, 'original') + ')'">
           <div class="backdrop-overlay"></div>
         </div>
 
         <div class="detail-content">
-          <button class="back-btn" (click)="goBack()">&#8592; {{ t('detail.back') }}</button>
+          <button class="back-btn" (click)="goBack()">&#8592; {{ t('tvDetail.back') }}</button>
 
           <div class="detail-header">
             <img
-              [src]="imageService.getPosterUrl(m.poster_path, 'w500')"
-              [alt]="m.title"
+              [src]="imageService.getPosterUrl(s.poster_path, 'w500')"
+              [alt]="s.name"
               class="detail-poster"
             />
             <div class="detail-info">
-              <h1 class="title">{{ m.title }}</h1>
+              <h1 class="title">{{ s.name }}</h1>
 
-              @if (m.tagline) {
-                <p class="tagline">{{ m.tagline }}</p>
+              @if (s.tagline) {
+                <p class="tagline">{{ s.tagline }}</p>
               }
 
               <div class="meta">
                 <span class="rating">
                   <span class="star">&#9733;</span>
-                  {{ m.vote_average | number:'1.1-1' }}
-                  <span class="vote-count">({{ m.vote_count }} {{ t('detail.votes') }})</span>
+                  {{ s.vote_average | number:'1.1-1' }}
+                  <span class="vote-count">({{ s.vote_count }} {{ t('tvDetail.votes') }})</span>
                 </span>
                 <span class="separator">&#8226;</span>
-                <span>{{ m.release_date | slice:0:4 }}</span>
-                @if (m.runtime) {
+                <span>{{ s.first_air_date | slice:0:4 }}</span>
+                @if (s.last_air_date && s.last_air_date !== s.first_air_date) {
+                  <span>- {{ s.last_air_date | slice:0:4 }}</span>
+                }
+                <span class="separator">&#8226;</span>
+                <span>{{ s.number_of_seasons }} {{ t('tvDetail.seasonCount') }}</span>
+                <span class="separator">&#8226;</span>
+                <span>{{ s.number_of_episodes }} {{ t('tvDetail.episodeCount') }}</span>
+                @if (avgRuntime() > 0) {
                   <span class="separator">&#8226;</span>
-                  <span>{{ formatRuntime(m.runtime) }}</span>
+                  <span>~{{ avgRuntime() }}min/ep</span>
                 }
               </div>
 
               <div class="genres">
-                @for (genre of m.genres; track genre.id) {
+                @for (genre of s.genres; track genre.id) {
                   <span class="genre-tag">{{ genre.name }}</span>
                 }
               </div>
 
               <div class="synopsis">
-                <h3>{{ t('detail.synopsis') }}</h3>
-                <p>{{ m.overview || t('detail.noSynopsis') }}</p>
+                <h3>{{ t('tvDetail.synopsis') }}</h3>
+                <p>{{ s.overview || t('tvDetail.noSynopsis') }}</p>
               </div>
             </div>
           </div>
 
+          @if (s.created_by && s.created_by.length > 0) {
+            <div class="creators">
+              <span class="creators-label">{{ t('tvDetail.createdBy') }}</span>
+              @for (creator of s.created_by; track creator.id; let last = $last) {
+                <span class="creator-name">{{ creator.name }}{{ last ? '' : ', ' }}</span>
+              }
+            </div>
+          }
+
+          @if (s.networks && s.networks.length > 0) {
+            <section class="networks-section">
+              <h3>{{ t('tvDetail.networks') }}</h3>
+              <div class="networks-grid">
+                @for (network of s.networks; track network.id) {
+                  <div class="network-card">
+                    @if (network.logo_path) {
+                      <img
+                        [src]="imageService.getLogoUrl(network.logo_path)"
+                        [alt]="network.name"
+                        class="network-logo"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <span class="network-name-only">{{ network.name }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+          }
+
           @if (topCast().length > 0) {
             <section class="cast-section">
-              <h3>{{ t('detail.cast') }}</h3>
+              <h3>{{ t('tvDetail.cast') }}</h3>
               <div class="cast-grid">
                 @for (member of topCast(); track member.id) {
                   <div class="cast-card clickable" (click)="goToActor(member)">
@@ -84,19 +122,39 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
             </section>
           }
 
-          @if (directorInfo()) {
-            <div class="director clickable" (click)="goToDirector()">
-              <span class="director-label">{{ t('detail.directedBy') }}</span>
-              <span class="director-name">{{ directorInfo()!.name }}</span>
-            </div>
+          @if (s.seasons && s.seasons.length > 0) {
+            <section class="seasons-section">
+              <h3>{{ t('tvDetail.seasons') }}</h3>
+              <div class="seasons-grid">
+                @for (season of s.seasons; track season.id) {
+                  @if (season.season_number > 0) {
+                    <div class="season-card">
+                      <img
+                        [src]="imageService.getPosterUrl(season.poster_path, 'w185')"
+                        [alt]="season.name"
+                        class="season-poster"
+                        loading="lazy"
+                      />
+                      <div class="season-info">
+                        <span class="season-name">{{ season.name }}</span>
+                        <span class="season-meta">{{ season.episode_count }} {{ t('tvDetail.episodes') }}</span>
+                        @if (season.air_date) {
+                          <span class="season-date">{{ season.air_date | slice:0:4 }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </section>
           }
 
           @if (watchProviders(); as wp) {
             <section class="watch-providers">
-              <h3>{{ t('detail.whereToWatch') }}</h3>
+              <h3>{{ t('tvDetail.whereToWatch') }}</h3>
               @if (wp.flatrate?.length) {
                 <div class="provider-group">
-                  <span class="provider-label">{{ t('detail.streaming') }}</span>
+                  <span class="provider-label">{{ t('tvDetail.streaming') }}</span>
                   <div class="provider-logos">
                     @for (p of wp.flatrate; track p.provider_id) {
                       <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
@@ -106,7 +164,7 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
               }
               @if (wp.rent?.length) {
                 <div class="provider-group">
-                  <span class="provider-label">{{ t('detail.rent') }}</span>
+                  <span class="provider-label">{{ t('tvDetail.rent') }}</span>
                   <div class="provider-logos">
                     @for (p of wp.rent; track p.provider_id) {
                       <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
@@ -116,7 +174,7 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
               }
               @if (wp.buy?.length) {
                 <div class="provider-group">
-                  <span class="provider-label">{{ t('detail.buy') }}</span>
+                  <span class="provider-label">{{ t('tvDetail.buy') }}</span>
                   <div class="provider-logos">
                     @for (p of wp.buy; track p.provider_id) {
                       <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
@@ -127,11 +185,11 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
               <div class="provider-footer">
                 <a [href]="getWatchSearchUrl()" target="_blank" rel="noopener" class="no-providers-link">
                   <span class="search-icon">&#128269;</span>
-                  {{ t('detail.noProviders') }}
+                  {{ t('tvDetail.noProviders') }}
                 </a>
                 @if (wp.link) {
                   <a [href]="wp.link" target="_blank" rel="noopener" class="provider-credit">
-                    {{ t('detail.poweredByJustWatch') }}
+                    {{ t('tvDetail.poweredByJustWatch') }}
                   </a>
                 }
               </div>
@@ -143,9 +201,9 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
       <div class="loader"><div class="spinner"></div></div>
     }
   `,
-  styleUrl: './movie-detail.component.scss'
+  styleUrl: './tv-detail.component.scss'
 })
-export class MovieDetailComponent implements OnInit {
+export class TvDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private location = inject(Location);
@@ -154,20 +212,19 @@ export class MovieDetailComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   imageService = inject(ImageService);
 
-  movie = signal<MovieDetail | null>(null);
+  show = signal<TvDetail | null>(null);
   topCast = signal<CastMember[]>([]);
-  directorInfo = signal<CrewMember | null>(null);
   watchProviders = signal<WatchProviders | null>(null);
+  avgRuntime = signal(0);
 
-  private movieId = 0;
+  private tvId = 0;
   private activeRequest?: Subscription;
   private watchSub?: Subscription;
 
-  /** Re-fetches movie data whenever the language changes. */
   private langEffect = effect(() => {
-    this.ts.lang(); // track language signal
-    if (this.movieId > 0) {
-      untracked(() => this.loadMovie(this.movieId));
+    this.ts.lang();
+    if (this.tvId > 0) {
+      untracked(() => this.loadTv(this.tvId));
     }
   });
 
@@ -179,24 +236,26 @@ export class MovieDetailComponent implements OnInit {
       this.watchSub?.unsubscribe();
     });
 
-    this.movieId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadMovie(this.movieId);
+    this.tvId = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadTv(this.tvId);
   }
 
-  private loadMovie(id: number): void {
+  private loadTv(id: number): void {
     this.activeRequest?.unsubscribe();
-    this.activeRequest = this.movieService.getMovieDetail(id).subscribe(detail => {
-      this.movie.set(detail);
+    this.activeRequest = this.movieService.getTvDetail(id).subscribe(detail => {
+      this.show.set(detail);
       if (detail.credits?.cast) {
         this.topCast.set(detail.credits.cast.slice(0, 10));
       }
-      if (detail.credits?.crew) {
-        const dir = detail.credits.crew.find(c => c.job === 'Director');
-        this.directorInfo.set(dir ?? null);
+      if (detail.episode_run_time && detail.episode_run_time.length > 0) {
+        const avg = Math.round(detail.episode_run_time.reduce((a, b) => a + b, 0) / detail.episode_run_time.length);
+        this.avgRuntime.set(avg);
+      } else {
+        this.avgRuntime.set(0);
       }
     });
     this.watchSub?.unsubscribe();
-    this.watchSub = this.movieService.getWatchProviders(id).subscribe({
+    this.watchSub = this.movieService.getTvWatchProviders(id).subscribe({
       next: wp => this.watchProviders.set(wp),
       error: () => this.watchProviders.set(null)
     });
@@ -212,26 +271,11 @@ export class MovieDetailComponent implements OnInit {
     });
   }
 
-  goToDirector(): void {
-    const dir = this.directorInfo();
-    if (dir) {
-      this.router.navigate(['/search'], {
-        queryParams: { tab: 'director', personId: dir.id }
-      });
-    }
-  }
-
   getWatchSearchUrl(): string {
-    const m = this.movie();
-    if (!m) return '#';
+    const s = this.show();
+    if (!s) return '#';
     const keyword = this.ts.lang() === 'fr' ? 'regarder' : 'watch';
-    const query = encodeURIComponent(`${keyword} ${m.title} streaming`);
+    const query = encodeURIComponent(`${keyword} ${s.name} streaming`);
     return `https://www.google.com/search?q=${query}`;
-  }
-
-  formatRuntime(minutes: number): string {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return h > 0 ? `${h}h ${m}min` : `${m}min`;
   }
 }

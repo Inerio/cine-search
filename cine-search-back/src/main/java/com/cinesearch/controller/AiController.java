@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * AI-powered search endpoint. Accepts natural language queries,
  * extracts structured filters via Groq LLM, and resolves results
  * through a multi-step TMDB fallback cascade with best-match scoring
  * and similar movie recommendations.
+ * Supports movie/tv/all media types.
  */
 @RestController
 @RequestMapping("/api/ai")
@@ -37,7 +39,8 @@ public class AiController {
             @Valid @RequestBody AiParseRequest request,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         String userText = request.text().trim();
-        log.info("AI parse request: '{}' (lang={})", userText, lang);
+        String requestedMediaType = request.mediaType() != null ? request.mediaType() : "all";
+        log.info("AI parse request: '{}' (lang={}, mediaType={})", userText, lang, requestedMediaType);
 
         // 1. LLM structured extraction
         AiMovieQuery parsed = groqService.parseUserQuery(userText);
@@ -48,17 +51,37 @@ public class AiController {
             return ResponseEntity.ok(new AiSearchResponse(parsed, null, List.of(), List.of(), 0));
         }
 
-        // 3. Resolve results with enhanced fallback cascade
-        EnhancedResult result = resolveResults(parsed, userText, lang);
+        // 3. Determine effective media type
+        String effectiveType = resolveEffectiveType(requestedMediaType, parsed);
+        log.info("Effective media type: {} (requested={}, llm={})", effectiveType, requestedMediaType, parsed.getType());
 
-        log.info("AI search: bestMatch={}, similar={}, results={} (intent={})",
+        // 4. Resolve results with enhanced fallback cascade
+        EnhancedResult result = resolveResults(parsed, userText, lang, effectiveType);
+
+        log.info("AI search: bestMatch={}, similar={}, results={} (intent={}, type={})",
                 result.bestMatch != null ? result.bestMatch.title() : "none",
                 result.similarMovies.size(),
                 result.results.size(),
-                parsed.getIntent());
+                parsed.getIntent(),
+                effectiveType);
 
         return ResponseEntity.ok(new AiSearchResponse(
                 parsed, result.bestMatch, result.similarMovies, result.results, result.total));
+    }
+
+    /**
+     * Determines the effective media type for search.
+     * User's explicit choice overrides LLM detection.
+     */
+    private String resolveEffectiveType(String requested, AiMovieQuery parsed) {
+        if ("movie".equals(requested) || "tv".equals(requested)) {
+            return requested;
+        }
+        // "all" → let LLM decide, or keep "all"
+        if (parsed.getType() != null) {
+            return parsed.getType();
+        }
+        return "all";
     }
 
     // ============================
@@ -70,53 +93,53 @@ public class AiController {
 
     /**
      * Two-phase resolution:
-     * Phase A: Find the exact movie (best match)
-     * Phase B: Get similar movies if best match found
+     * Phase A: Find the exact movie/show (best match)
+     * Phase B: Get similar movies/shows if best match found
      */
-    private EnhancedResult resolveResults(AiMovieQuery parsed, String userText, String lang) {
+    private EnhancedResult resolveResults(AiMovieQuery parsed, String userText, String lang, String mediaType) {
         MovieDto bestMatch = null;
         List<MovieDto> results = List.of();
 
-        // === PHASE A: Find the exact movie ===
+        // === PHASE A: Find the exact movie/show ===
 
         // Step 1: Title search (most precise)
         if (parsed.getTitle() != null && !parsed.getTitle().isBlank()) {
             log.info("Step 1: searching by title '{}'", parsed.getTitle());
-            SearchResult r = searchTmdb(parsed.getTitle(), lang);
+            SearchResult r = searchByMediaType(parsed.getTitle(), mediaType, lang);
             if (!r.movies.isEmpty()) {
-                bestMatch = pickBestMatch(r.movies, parsed);
+                bestMatch = pickBestMatch(r.movies, parsed, mediaType);
                 results = r.movies;
             } else if (parsed.getYear() != null) {
                 // Step 1b: title + year for disambiguation
                 log.info("Step 1b: searching by title + year '{} {}'", parsed.getTitle(), parsed.getYear());
-                r = searchTmdb(parsed.getTitle() + " " + parsed.getYear(), lang);
+                r = searchByMediaType(parsed.getTitle() + " " + parsed.getYear(), mediaType, lang);
                 if (!r.movies.isEmpty()) {
-                    bestMatch = pickBestMatch(r.movies, parsed);
+                    bestMatch = pickBestMatch(r.movies, parsed, mediaType);
                     results = r.movies;
                 }
             }
         }
 
-        // Step 2: Alternate titles (NEW)
+        // Step 2: Alternate titles
         if (bestMatch == null && parsed.getAlternateTitles() != null) {
             for (String altTitle : parsed.getAlternateTitles()) {
                 log.info("Step 2: trying alternate title '{}'", altTitle);
-                SearchResult r = searchTmdb(altTitle, lang);
+                SearchResult r = searchByMediaType(altTitle, mediaType, lang);
                 if (!r.movies.isEmpty()) {
-                    bestMatch = pickBestMatch(r.movies, parsed);
+                    bestMatch = pickBestMatch(r.movies, parsed, mediaType);
                     results = r.movies;
                     break;
                 }
             }
         }
 
-        // Step 3: Actor-based search (NEW)
-        if (bestMatch == null && parsed.getActors() != null && !parsed.getActors().isEmpty()) {
+        // Step 3: Actor-based search (only for movie type, person credits are movie-only)
+        if (bestMatch == null && !"tv".equals(mediaType)
+                && parsed.getActors() != null && !parsed.getActors().isEmpty()) {
             log.info("Step 3: searching by actor '{}'", parsed.getActors().getFirst());
             bestMatch = searchByActor(parsed, lang);
             if (bestMatch != null && results.isEmpty()) {
-                // Use title search with the found movie's title for full results
-                SearchResult r = searchTmdb(bestMatch.title(), lang);
+                SearchResult r = searchByMediaType(bestMatch.title(), mediaType, lang);
                 results = r.movies.isEmpty() ? List.of(bestMatch) : r.movies;
             }
         }
@@ -124,27 +147,25 @@ public class AiController {
         // Step 4: Query-based search
         if (bestMatch == null && parsed.getQuery() != null && !parsed.getQuery().isBlank()) {
             log.info("Step 4: searching by query '{}'", parsed.getQuery());
-            SearchResult r = searchTmdb(parsed.getQuery(), lang);
+            SearchResult r = searchByMediaType(parsed.getQuery(), mediaType, lang);
             if (!r.movies.isEmpty()) {
-                bestMatch = pickBestMatch(r.movies, parsed);
+                bestMatch = pickBestMatch(r.movies, parsed, mediaType);
                 results = r.movies;
             }
         }
 
-        // Step 5: Keyword-based search (enhanced)
+        // Step 5: Keyword-based search
         if (bestMatch == null && parsed.getKeywords() != null && !parsed.getKeywords().isEmpty()) {
             log.info("Step 5: searching by keywords {}", parsed.getKeywords());
-            // Try combined keywords first
             String combined = String.join(" ", parsed.getKeywords());
-            SearchResult r = searchTmdb(combined, lang);
+            SearchResult r = searchByMediaType(combined, mediaType, lang);
             if (!r.movies.isEmpty()) {
-                bestMatch = pickBestMatch(r.movies, parsed);
+                bestMatch = pickBestMatch(r.movies, parsed, mediaType);
                 results = r.movies;
             } else {
-                // Try individual keywords (longest first)
-                SearchResult kwResult = searchByKeywords(combined, lang);
+                SearchResult kwResult = searchByKeywords(combined, mediaType, lang);
                 if (!kwResult.movies.isEmpty()) {
-                    bestMatch = pickBestMatch(kwResult.movies, parsed);
+                    bestMatch = pickBestMatch(kwResult.movies, parsed, mediaType);
                     results = kwResult.movies;
                 }
             }
@@ -154,7 +175,7 @@ public class AiController {
         if (results.isEmpty() && hasFilters(parsed)) {
             log.info("Step 6: discover with filters genres={}, year={}, lang={}",
                     parsed.getGenres(), parsed.getYear(), parsed.getLanguage());
-            SearchResult r = discoverTmdb(parsed, lang);
+            SearchResult r = discoverByMediaType(parsed, mediaType, lang);
             if (!r.movies.isEmpty()) {
                 results = r.movies;
             }
@@ -163,28 +184,43 @@ public class AiController {
         // Step 7: Raw user text fallback
         if (results.isEmpty()) {
             log.info("Step 7: fallback search with raw userText");
-            SearchResult r = searchTmdb(userText, lang);
+            SearchResult r = searchByMediaType(userText, mediaType, lang);
             results = r.movies;
         }
 
         // Step 8: Popular discover in genre fallback
         if (results.isEmpty() && parsed.getGenres() != null && !parsed.getGenres().isEmpty()) {
             log.info("Step 8: fallback discover popular in genre");
-            SearchResult r = discoverTmdb(parsed, lang);
+            SearchResult r = discoverByMediaType(parsed, mediaType, lang);
             results = r.movies;
         }
 
-        // === PHASE B: Get similar movies ===
+        // Tag bestMatch with media type if not already set
+        if (bestMatch != null) {
+            String bestType = "tv".equals(mediaType) ? "tv" : ("movie".equals(mediaType) ? "movie" : bestMatch.media_type());
+            bestMatch = tagSingleMediaType(bestMatch, bestType != null ? bestType : "movie");
+        }
+
+        // === PHASE B: Get similar movies/shows ===
         List<MovieDto> similarMovies = List.of();
         if (bestMatch != null && bestMatch.id() != null) {
-            log.info("Phase B: fetching similar movies for '{}'", bestMatch.title());
+            log.info("Phase B: fetching similar for '{}' (media_type={})", bestMatch.title(), bestMatch.media_type());
             try {
-                MovieListResponse similar = tmdbService.getSimilarMovies(bestMatch.id(), 1, lang);
+                MovieListResponse similar;
+                String similarType;
+                if ("tv".equals(bestMatch.media_type()) || "tv".equals(mediaType)) {
+                    similar = tmdbService.getSimilarTv(bestMatch.id(), 1, lang);
+                    similarType = "tv";
+                } else {
+                    similar = tmdbService.getSimilarMovies(bestMatch.id(), 1, lang);
+                    similarType = "movie";
+                }
                 if (similar != null && similar.results() != null) {
-                    similarMovies = similar.results().stream().limit(12).toList();
+                    similarMovies = tagMediaType(
+                            similar.results().stream().limit(12).toList(), similarType);
                 }
             } catch (Exception e) {
-                log.warn("Failed to fetch similar movies: {}", e.getMessage());
+                log.warn("Failed to fetch similar: {}", e.getMessage());
             }
         }
 
@@ -199,23 +235,112 @@ public class AiController {
     }
 
     // ============================
+    // Media-type aware search
+    // ============================
+
+    private record SearchResult(List<MovieDto> movies, int total) {}
+
+    /**
+     * Dispatches search to the correct TMDB endpoint based on media type.
+     */
+    private SearchResult searchByMediaType(String query, String mediaType, String lang) {
+        MovieListResponse response;
+        if ("tv".equals(mediaType)) {
+            response = tmdbService.searchTv(query, 1, lang);
+            if (response != null && response.results() != null && !response.results().isEmpty()) {
+                List<MovieDto> tagged = tagMediaType(response.results(), "tv");
+                return new SearchResult(tagged,
+                        response.total_results() != null ? response.total_results() : tagged.size());
+            }
+        } else if ("movie".equals(mediaType)) {
+            response = tmdbService.searchMovies(query, 1, lang);
+            if (response != null && response.results() != null && !response.results().isEmpty()) {
+                List<MovieDto> tagged = tagMediaType(response.results(), "movie");
+                return new SearchResult(tagged,
+                        response.total_results() != null ? response.total_results() : tagged.size());
+            }
+        } else {
+            // "all" → use multi search, filter out persons (multi already includes media_type)
+            response = tmdbService.searchMulti(query, 1, lang);
+            if (response != null && response.results() != null) {
+                List<MovieDto> filtered = response.results().stream()
+                        .filter(m -> !"person".equals(m.media_type()))
+                        .toList();
+                return new SearchResult(filtered, filtered.size());
+            }
+        }
+        return new SearchResult(List.of(), 0);
+    }
+
+    /**
+     * Dispatches discover to the correct TMDB endpoint based on media type.
+     */
+    private SearchResult discoverByMediaType(AiMovieQuery parsed, String mediaType, String lang) {
+        if ("tv".equals(mediaType)) {
+            return discoverTv(parsed, lang);
+        } else if ("movie".equals(mediaType)) {
+            return discoverMovie(parsed, lang);
+        } else {
+            // "all" → try both, combine results
+            SearchResult movieResult = discoverMovie(parsed, lang);
+            SearchResult tvResult = discoverTv(parsed, lang);
+            List<MovieDto> combined = Stream.concat(movieResult.movies.stream(), tvResult.movies.stream())
+                    .sorted(Comparator.comparingDouble((MovieDto m) ->
+                            m.popularity() != null ? m.popularity() : 0).reversed())
+                    .limit(20)
+                    .toList();
+            return new SearchResult(combined, combined.size());
+        }
+    }
+
+    private SearchResult discoverMovie(AiMovieQuery parsed, String lang) {
+        String genreIds = resolveGenreIds(parsed.getGenres(), GENRE_MAP);
+        MovieListResponse response = tmdbService.discoverMoviesWithGenreIds(
+                genreIds,
+                parsed.getYear(),
+                resolveSortRating(parsed.getSort()),
+                resolveLanguageCode(parsed.getLanguage()),
+                resolveTmdbSort(parsed.getSort(), "movie"),
+                1, lang);
+        if (response != null && response.results() != null && !response.results().isEmpty()) {
+            List<MovieDto> tagged = tagMediaType(response.results(), "movie");
+            return new SearchResult(tagged, tagged.size());
+        }
+        return new SearchResult(List.of(), 0);
+    }
+
+    private SearchResult discoverTv(AiMovieQuery parsed, String lang) {
+        String genreIds = resolveGenreIds(parsed.getGenres(), TV_GENRE_MAP);
+        MovieListResponse response = tmdbService.discoverTvWithGenreIds(
+                genreIds,
+                parsed.getYear(),
+                resolveSortRating(parsed.getSort()),
+                resolveLanguageCode(parsed.getLanguage()),
+                resolveTmdbSort(parsed.getSort(), "tv"),
+                1, lang);
+        if (response != null && response.results() != null && !response.results().isEmpty()) {
+            List<MovieDto> tagged = tagMediaType(response.results(), "tv");
+            return new SearchResult(tagged, tagged.size());
+        }
+        return new SearchResult(List.of(), 0);
+    }
+
+    // ============================
     // Best match scoring
     // ============================
 
-    /**
-     * Scores search results against LLM metadata (year, genres)
-     * to find the single best matching movie.
-     */
-    private MovieDto pickBestMatch(List<MovieDto> results, AiMovieQuery parsed) {
+    private MovieDto pickBestMatch(List<MovieDto> results, AiMovieQuery parsed, String mediaType) {
         if (results.isEmpty()) return null;
         if (results.size() == 1) return results.getFirst();
+
+        Map<String, Integer> genreMap = "tv".equals(mediaType) ? TV_GENRE_MAP : GENRE_MAP;
 
         MovieDto best = results.getFirst();
         int bestScore = 0;
 
         for (MovieDto movie : results) {
             int score = 0;
-            // Year match (strong signal)
+            // Year match
             if (parsed.getYear() != null && movie.release_date() != null) {
                 try {
                     int movieYear = Integer.parseInt(movie.release_date().substring(0, 4));
@@ -226,7 +351,7 @@ public class AiController {
             // Genre overlap
             if (parsed.getGenres() != null && movie.genre_ids() != null) {
                 for (String genre : parsed.getGenres()) {
-                    Integer genreId = GENRE_MAP.get(genre.toLowerCase());
+                    Integer genreId = genreMap.get(genre.toLowerCase());
                     if (genreId != null && movie.genre_ids().contains(genreId)) {
                         score += 3;
                     }
@@ -245,13 +370,9 @@ public class AiController {
     }
 
     // ============================
-    // Actor-based search (NEW)
+    // Actor-based search
     // ============================
 
-    /**
-     * Searches for an actor on TMDB, retrieves their filmography,
-     * and filters/scores it against the parsed query metadata.
-     */
     private MovieDto searchByActor(AiMovieQuery parsed, String lang) {
         try {
             String actorName = parsed.getActors().getFirst();
@@ -266,10 +387,8 @@ public class AiController {
                 return null;
             }
 
-            // Filter and score actor's filmography
             List<MovieDto> movies = credits.cast().stream()
                     .filter(m -> m.title() != null)
-                    // Filter by year if specified
                     .filter(m -> {
                         if (parsed.getYear() == null) return true;
                         if (m.release_date() == null || m.release_date().length() < 4) return false;
@@ -278,7 +397,6 @@ public class AiController {
                             return Math.abs(year - parsed.getYear()) <= 2;
                         } catch (Exception e) { return false; }
                     })
-                    // Filter by genre if specified
                     .filter(m -> {
                         if (parsed.getGenres() == null || parsed.getGenres().isEmpty()) return true;
                         if (m.genre_ids() == null) return false;
@@ -303,25 +421,10 @@ public class AiController {
     }
 
     // ============================
-    // Existing helpers (enhanced)
+    // Keyword search
     // ============================
 
-    private record SearchResult(List<MovieDto> movies, int total) {}
-
-    private SearchResult searchTmdb(String query, String lang) {
-        MovieListResponse response = tmdbService.searchMovies(query, 1, lang);
-        if (response != null && response.results() != null && !response.results().isEmpty()) {
-            return new SearchResult(response.results(),
-                    response.total_results() != null ? response.total_results() : response.results().size());
-        }
-        return new SearchResult(List.of(), 0);
-    }
-
-    /**
-     * Splits a query into individual keywords (>3 chars), sorted longest first,
-     * and searches TMDB with each until we get results.
-     */
-    private SearchResult searchByKeywords(String query, String lang) {
+    private SearchResult searchByKeywords(String query, String mediaType, String lang) {
         List<String> keywords = Arrays.stream(query.split("\\s+"))
                 .filter(w -> w.length() > 3)
                 .sorted((a, b) -> b.length() - a.length())
@@ -330,28 +433,8 @@ public class AiController {
 
         for (String keyword : keywords) {
             log.info("  keyword search: '{}'", keyword);
-            SearchResult r = searchTmdb(keyword, lang);
+            SearchResult r = searchByMediaType(keyword, mediaType, lang);
             if (!r.movies.isEmpty()) return r;
-        }
-        return new SearchResult(List.of(), 0);
-    }
-
-    /**
-     * Discover using ALL genres (multi-genre) instead of just the first.
-     */
-    private SearchResult discoverTmdb(AiMovieQuery parsed, String lang) {
-        String genreIds = resolveGenreIds(parsed.getGenres());
-        MovieListResponse response = tmdbService.discoverMoviesWithGenreIds(
-                genreIds,
-                parsed.getYear(),
-                resolveSortRating(parsed.getSort()),
-                resolveLanguageCode(parsed.getLanguage()),
-                resolveTmdbSort(parsed.getSort()),
-                1,
-                lang
-        );
-        if (response != null && response.results() != null && !response.results().isEmpty()) {
-            return new SearchResult(response.results(), response.results().size());
         }
         return new SearchResult(List.of(), 0);
     }
@@ -363,7 +446,9 @@ public class AiController {
                 || (q.getSort() != null && !"relevance".equals(q.getSort()));
     }
 
-    // --- Genre mapping ---
+    // ============================
+    // Genre mapping (Movie + TV)
+    // ============================
 
     private static final Map<String, Integer> GENRE_MAP = Map.ofEntries(
             Map.entry("action", 28),
@@ -386,14 +471,31 @@ public class AiController {
             Map.entry("western", 37)
     );
 
-    /**
-     * Returns ALL genre IDs as a comma-separated string (e.g. "28,878,53")
-     * instead of just the first genre.
-     */
-    private String resolveGenreIds(List<String> genres) {
+    private static final Map<String, Integer> TV_GENRE_MAP = Map.ofEntries(
+            Map.entry("action", 10759), Map.entry("action & adventure", 10759),
+            Map.entry("adventure", 10759), Map.entry("aventure", 10759),
+            Map.entry("animation", 16),
+            Map.entry("comedy", 35), Map.entry("comédie", 35), Map.entry("comedie", 35),
+            Map.entry("crime", 80),
+            Map.entry("documentary", 99), Map.entry("documentaire", 99),
+            Map.entry("drama", 18), Map.entry("drame", 18),
+            Map.entry("family", 10751), Map.entry("famille", 10751),
+            Map.entry("fantasy", 10765), Map.entry("fantaisie", 10765), Map.entry("fantastique", 10765),
+            Map.entry("sci-fi", 10765), Map.entry("science-fiction", 10765), Map.entry("science fiction", 10765), Map.entry("sf", 10765),
+            Map.entry("history", 36), Map.entry("histoire", 36), Map.entry("historique", 36),
+            Map.entry("horror", 27), Map.entry("horreur", 27),
+            Map.entry("music", 10402), Map.entry("musique", 10402),
+            Map.entry("mystery", 9648), Map.entry("mystère", 9648), Map.entry("mystere", 9648),
+            Map.entry("romance", 10749),
+            Map.entry("thriller", 53),
+            Map.entry("war", 10768), Map.entry("guerre", 10768), Map.entry("war & politics", 10768),
+            Map.entry("western", 37)
+    );
+
+    private String resolveGenreIds(List<String> genres, Map<String, Integer> genreMap) {
         if (genres == null || genres.isEmpty()) return null;
         String ids = genres.stream()
-                .map(g -> GENRE_MAP.get(g.toLowerCase()))
+                .map(g -> genreMap.get(g.toLowerCase()))
                 .filter(Objects::nonNull)
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
@@ -431,12 +533,38 @@ public class AiController {
         return null;
     }
 
-    private String resolveTmdbSort(String sort) {
+    // ============================
+    // Media-type tagging helper
+    // ============================
+
+    /**
+     * Creates new MovieDto instances with the media_type field explicitly set.
+     * Needed because TMDB /search/movie, /search/tv, and /discover endpoints
+     * do NOT return media_type (only /search/multi does).
+     */
+    private List<MovieDto> tagMediaType(List<MovieDto> movies, String type) {
+        if (movies == null || movies.isEmpty()) return movies;
+        return movies.stream()
+                .map(m -> m.media_type() != null ? m : new MovieDto(
+                        m.id(), m.title(), m.overview(), m.poster_path(),
+                        m.backdrop_path(), m.release_date(), m.vote_average(), m.vote_count(),
+                        m.popularity(), m.genre_ids(), m.original_language(), m.job(), type))
+                .toList();
+    }
+
+    private MovieDto tagSingleMediaType(MovieDto m, String type) {
+        if (m == null || m.media_type() != null) return m;
+        return new MovieDto(m.id(), m.title(), m.overview(), m.poster_path(),
+                m.backdrop_path(), m.release_date(), m.vote_average(), m.vote_count(),
+                m.popularity(), m.genre_ids(), m.original_language(), m.job(), type);
+    }
+
+    private String resolveTmdbSort(String sort, String mediaType) {
         if (sort == null) return null;
         return switch (sort) {
             case "rating" -> "vote_average.desc";
             case "popularity" -> "popularity.desc";
-            case "recent" -> "primary_release_date.desc";
+            case "recent" -> "tv".equals(mediaType) ? "first_air_date.desc" : "primary_release_date.desc";
             default -> null;
         };
     }

@@ -16,6 +16,7 @@ export const EN: Record<string, string> = {
 
   // --- Search tabs ---
   "search.tab.movie": "Movie",
+  "search.tab.tv": "TV Show",
   "search.tab.actor": "Actor",
   "search.tab.director": "Director",
   "search.tab.advanced": "Advanced search",
@@ -86,6 +87,11 @@ export const EN: Record<string, string> = {
   "scene.confidenceHigh": "High confidence",
   "scene.confidenceMedium": "Medium confidence",
   "scene.confidenceLow": "Low confidence",
+  "scene.mediaAll": "Both",
+  "scene.mediaMovie": "Movie",
+  "scene.mediaTv": "TV Show",
+  "scene.typeTV": "TV Show",
+  "scene.typeMovie": "Movie",
 
   // --- Actor ---
   "actor.placeholder": "Search an actor...",
@@ -178,4 +184,29 @@ export const EN: Record<string, string> = {
   "detail.buy": "Buy",
   "detail.poweredByJustWatch": "Data by JustWatch",
   "detail.noProviders": "Search where to watch this movie",
+
+  // --- TV Shows ---
+  "tv.placeholder": "Search a TV show...",
+  "tv.trending": "Trending",
+  "tv.trendingTitle": "Trending TV shows",
+  "tv.noResults": "No TV show found",
+
+  // --- TV Detail ---
+  "tvDetail.back": "Back",
+  "tvDetail.synopsis": "Synopsis",
+  "tvDetail.noSynopsis": "No synopsis available.",
+  "tvDetail.cast": "Main cast",
+  "tvDetail.createdBy": "Created by",
+  "tvDetail.seasons": "Seasons",
+  "tvDetail.episodes": "episodes",
+  "tvDetail.networks": "Networks",
+  "tvDetail.votes": "votes",
+  "tvDetail.whereToWatch": "Where to watch",
+  "tvDetail.streaming": "Streaming",
+  "tvDetail.rent": "Rent",
+  "tvDetail.buy": "Buy",
+  "tvDetail.poweredByJustWatch": "Data by JustWatch",
+  "tvDetail.noProviders": "Search where to watch this show",
+  "tvDetail.seasonCount": "seasons",
+  "tvDetail.episodeCount": "episodes",
 };

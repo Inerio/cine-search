@@ -21,6 +21,37 @@
   }
 }
 
+.media-type-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+
+  .media-type-btn {
+    padding: 0.45rem 1.2rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    &.active {
+      background: rgba(165, 29, 29, 0.2);
+      border-color: rgba(165, 29, 29, 0.4);
+      color: #dc2626;
+      font-weight: 600;
+    }
+  }
+}
+
 .prompt-area {
   margin-bottom: 2rem;
 
@@ -185,11 +216,13 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .parsed-query {
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 0.85rem;
-    font-style: italic;
+  .type-tag {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.12);
+    color: rgba(147, 197, 253, 0.9);
+    font-weight: 600;
   }
+
 }
 
 .ai-explanation {
