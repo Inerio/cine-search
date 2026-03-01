@@ -183,6 +183,7 @@ export interface AiMovieQuery {
   actors: string[] | null;
   directors: string[] | null;
   keywords: string[] | null;
+  search_queries: string[] | null;
   explanation: string | null;
 }
 
