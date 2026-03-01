@@ -40,7 +40,7 @@ export const EN: Record<string, string> = {
   "filter.sortPopularity": "Sort: Popularity",
   "filter.sortRating": "Top rated",
   "filter.sortRecent": "Most recent",
-  "filter.sortRevenue": "Highest box office",
+  "filter.sortRevenue": "Box office",
   "filter.allLanguages": "All languages",
   "filter.lang.fr": "French",
   "filter.lang.en": "English",
@@ -61,7 +61,11 @@ export const EN: Record<string, string> = {
   "filter.short": "Short (< 90 min)",
   "filter.medium": "Medium (90 - 120 min)",
   "filter.long": "Long (> 2h)",
+  "filter.tv.short": "Short (< 30 min)",
+  "filter.tv.medium": "Medium (30 - 60 min)",
+  "filter.tv.long": "Long (60 min or more)",
   "filter.directorPlaceholder": "Director (e.g. Spielberg, Nolan...)",
+  "filter.creatorPlaceholder": "Director (e.g. Vince Gilligan...)",
 
   // --- Scene search (advanced) ---
   "scene.title": "Advanced Search",

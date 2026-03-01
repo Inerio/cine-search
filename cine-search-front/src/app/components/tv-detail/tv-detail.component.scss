@@ -169,50 +169,6 @@
   }
 }
 
-// --- Networks ---
-
-.networks-section {
-  margin-bottom: 2rem;
-
-  h3 {
-    color: #fff;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin: 0 0 1rem;
-  }
-}
-
-.networks-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-}
-
-.network-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1rem;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  .network-logo {
-    height: 28px;
-    max-width: 100px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.8;
-  }
-
-  .network-name-only {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-}
-
 // --- Cast ---
 
 .cast-section {
@@ -395,6 +351,24 @@
       transform: scale(1.1);
       border-color: rgba(255, 255, 255, 0.2);
     }
+
+    &.network-logo {
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+      opacity: 0.8;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 6px;
+    }
+  }
+
+  .networks-group .network-name-only {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.6rem 1rem;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .provider-footer {

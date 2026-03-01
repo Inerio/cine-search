@@ -78,28 +78,6 @@ import { TvDetail, CastMember, WatchProviders } from '../../models/movie.model';
             </div>
           }
 
-          @if (s.networks && s.networks.length > 0) {
-            <section class="networks-section">
-              <h3>{{ t('tvDetail.networks') }}</h3>
-              <div class="networks-grid">
-                @for (network of s.networks; track network.id) {
-                  <div class="network-card">
-                    @if (network.logo_path) {
-                      <img
-                        [src]="imageService.getLogoUrl(network.logo_path)"
-                        [alt]="network.name"
-                        class="network-logo"
-                        loading="lazy"
-                      />
-                    } @else {
-                      <span class="network-name-only">{{ network.name }}</span>
-                    }
-                  </div>
-                }
-              </div>
-            </section>
-          }
-
           @if (topCast().length > 0) {
             <section class="cast-section">
               <h3>{{ t('tvDetail.cast') }}</h3>
@@ -149,46 +127,68 @@ import { TvDetail, CastMember, WatchProviders } from '../../models/movie.model';
             </section>
           }
 
-          @if (watchProviders(); as wp) {
+          @if (watchProviders() || (s.networks && s.networks.length > 0)) {
             <section class="watch-providers">
               <h3>{{ t('tvDetail.whereToWatch') }}</h3>
-              @if (wp.flatrate?.length) {
-                <div class="provider-group">
-                  <span class="provider-label">{{ t('tvDetail.streaming') }}</span>
+              @if (s.networks && s.networks.length > 0) {
+                <div class="provider-group networks-group">
+                  <span class="provider-label">{{ t('tvDetail.networks') }}</span>
                   <div class="provider-logos">
-                    @for (p of wp.flatrate; track p.provider_id) {
-                      <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                    @for (network of s.networks; track network.id) {
+                      @if (network.logo_path) {
+                        <img
+                          [src]="imageService.getLogoUrl(network.logo_path)"
+                          [alt]="network.name"
+                          [title]="network.name"
+                          class="provider-logo network-logo"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <span class="network-name-only">{{ network.name }}</span>
+                      }
                     }
                   </div>
                 </div>
               }
-              @if (wp.rent?.length) {
-                <div class="provider-group">
-                  <span class="provider-label">{{ t('tvDetail.rent') }}</span>
-                  <div class="provider-logos">
-                    @for (p of wp.rent; track p.provider_id) {
-                      <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
-                    }
+              @if (watchProviders(); as wp) {
+                @if (wp.flatrate?.length) {
+                  <div class="provider-group">
+                    <span class="provider-label">{{ t('tvDetail.streaming') }}</span>
+                    <div class="provider-logos">
+                      @for (p of wp.flatrate; track p.provider_id) {
+                        <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                      }
+                    </div>
                   </div>
-                </div>
-              }
-              @if (wp.buy?.length) {
-                <div class="provider-group">
-                  <span class="provider-label">{{ t('tvDetail.buy') }}</span>
-                  <div class="provider-logos">
-                    @for (p of wp.buy; track p.provider_id) {
-                      <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
-                    }
+                }
+                @if (wp.rent?.length) {
+                  <div class="provider-group">
+                    <span class="provider-label">{{ t('tvDetail.rent') }}</span>
+                    <div class="provider-logos">
+                      @for (p of wp.rent; track p.provider_id) {
+                        <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                      }
+                    </div>
                   </div>
-                </div>
+                }
+                @if (wp.buy?.length) {
+                  <div class="provider-group">
+                    <span class="provider-label">{{ t('tvDetail.buy') }}</span>
+                    <div class="provider-logos">
+                      @for (p of wp.buy; track p.provider_id) {
+                        <img [src]="imageService.getLogoUrl(p.logo_path)" [alt]="p.provider_name" [title]="p.provider_name" class="provider-logo" />
+                      }
+                    </div>
+                  </div>
+                }
               }
               <div class="provider-footer">
                 <a [href]="getWatchSearchUrl()" target="_blank" rel="noopener" class="no-providers-link">
                   <span class="search-icon">&#128269;</span>
                   {{ t('tvDetail.noProviders') }}
                 </a>
-                @if (wp.link) {
-                  <a [href]="wp.link" target="_blank" rel="noopener" class="provider-credit">
+                @if (watchProviders()?.link) {
+                  <a [href]="watchProviders()!.link" target="_blank" rel="noopener" class="provider-credit">
                     {{ t('tvDetail.poweredByJustWatch') }}
                   </a>
                 }

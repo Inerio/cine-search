@@ -129,6 +129,12 @@ export class MovieService {
     });
   }
 
+  getPersonTvShows(personId: number): Observable<PersonCreditsResponse> {
+    return this.http.get<PersonCreditsResponse>(`${this.apiUrl}/persons/${personId}/tv-shows`, {
+      params: new HttpParams().set('lang', this.lang)
+    });
+  }
+
   // --- TV Shows ---
 
   getTrendingTv(page = 1): Observable<MovieListResponse> {

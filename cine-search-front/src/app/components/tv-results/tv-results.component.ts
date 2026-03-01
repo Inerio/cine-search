@@ -4,10 +4,10 @@ import { Subscription } from 'rxjs';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
-import { Movie, Genre } from '../../models/movie.model';
+import { Movie, Genre, Person } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
 
-type TvSearchMode = 'none' | 'text' | 'discover';
+type TvSearchMode = 'none' | 'text' | 'discover' | 'creator';
 
 @Component({
   selector: 'app-tv-results',
@@ -51,7 +51,7 @@ type TvSearchMode = 'none' | 'text' | 'discover';
       <div class="filters" [class.filters-collapsed]="!filtersOpen()">
         <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="filter-select">
           <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
-          @for (genre of genres(); track genre.id) {
+          @for (genre of genres(); track $index) {
             <option [ngValue]="genre.id">{{ genre.name }}</option>
           }
         </select>
@@ -103,10 +103,40 @@ type TvSearchMode = 'none' | 'text' | 'discover';
 
         <select [ngModel]="selectedRuntime()" (ngModelChange)="onFilterChange('runtime', $event)" class="filter-select">
           <option [ngValue]="null">{{ t('filter.allDurations') }}</option>
-          <option value="short">{{ t('filter.short') }}</option>
-          <option value="medium">{{ t('filter.medium') }}</option>
-          <option value="long">{{ t('filter.long') }}</option>
+          <option value="short">{{ t('filter.tv.short') }}</option>
+          <option value="medium">{{ t('filter.tv.medium') }}</option>
+          <option value="long">{{ t('filter.tv.long') }}</option>
         </select>
+
+        <div class="creator-autocomplete">
+          <input
+            type="text"
+            [ngModel]="creatorQuery()"
+            (ngModelChange)="onCreatorInput($event)"
+            (focus)="onCreatorFocus()"
+            (blur)="hideCreatorDropdown()"
+            [placeholder]="selectedCreator() ? '' : t('filter.creatorPlaceholder')"
+            class="input"
+          />
+          @if (selectedCreator()) {
+            <span class="creator-tag">
+              {{ selectedCreator()!.name }}
+              <button class="tag-remove" (click)="clearCreatorAndApply()" type="button">&times;</button>
+            </span>
+          }
+          @if (showCreatorDropdown() && creatorResults().length > 0) {
+            <div class="dropdown-list">
+              @for (person of creatorResults(); track person.id) {
+                <div class="dropdown-item" (mousedown)="selectCreatorAndApply(person)">
+                  <span class="dropdown-name">{{ person.name }}</span>
+                  @if (person.known_for && person.known_for.length > 0) {
+                    <span class="dropdown-hint">{{ person.known_for[0].title || person.known_for[0].name }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
 
         @if (searched()) {
           <button class="btn-reset" (click)="resetFilters()">{{ t('search.reset') }}</button>
@@ -220,6 +250,13 @@ export class TvResultsComponent implements OnInit {
   selectedRuntime = signal<string | null>(null);
   selectedDecade = signal<string | null>(null);
 
+  // --- Creator autocomplete ---
+  creatorQuery = signal('');
+  creatorResults = signal<Person[]>([]);
+  selectedCreator = signal<Person | null>(null);
+  showCreatorDropdown = signal(false);
+  private allCreatorShows: Movie[] = [];
+
   // --- Mobile ---
   filtersOpen = signal(false);
 
@@ -235,12 +272,16 @@ export class TvResultsComponent implements OnInit {
     if (this.selectedSort()) count++;
     if (this.selectedLanguage()) count++;
     if (this.selectedRuntime()) count++;
+    if (this.selectedCreator()) count++;
     return count;
   });
 
   // --- Internal ---
   private textSearchTimeout: any;
+  private creatorSearchTimeout: any;
   private activeRequest?: Subscription;
+
+  private static readonly PAGE_SIZE = 20;
 
   t(key: string): string { return this.ts.t(key); }
 
@@ -251,10 +292,26 @@ export class TvResultsComponent implements OnInit {
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => {
       clearTimeout(this.textSearchTimeout);
+      clearTimeout(this.creatorSearchTimeout);
       this.activeRequest?.unsubscribe();
     });
 
-    this.movieService.getTvGenres().subscribe(res => this.genres.set(res.genres));
+    this.movieService.getTvGenres().subscribe(res => {
+      // TMDB combines several TV genres with " & " (e.g. "Sci-Fi & Fantasy",
+      // "Action & Adventure", "War & Politics"). Split them into separate
+      // entries so the dropdown stays compact and matches the Film tab.
+      const expanded: Genre[] = [];
+      for (const g of res.genres) {
+        const parts = g.name.split(' & ');
+        if (parts.length === 2) {
+          expanded.push({ id: g.id, name: parts[0] });
+          expanded.push({ id: g.id, name: parts[1] });
+        } else {
+          expanded.push(g);
+        }
+      }
+      this.genres.set(expanded);
+    });
     this.loadTrendingTv();
   }
 
@@ -342,7 +399,12 @@ export class TvResultsComponent implements OnInit {
       case 'runtime': this.selectedRuntime.set(value); break;
     }
     this.currentPage.set(1);
-    this.executeDiscover(1);
+
+    if (this.selectedCreator()) {
+      this.applyCreatorFilters(1);
+    } else {
+      this.executeDiscover(1);
+    }
   }
 
   private buildDiscoverParams(page: number) {
@@ -394,6 +456,153 @@ export class TvResultsComponent implements OnInit {
   }
 
   // =====================
+  //  Creator autocomplete
+  // =====================
+
+  onCreatorInput(value: string): void {
+    this.creatorQuery.set(value);
+    if (this.selectedCreator()) this.selectedCreator.set(null);
+
+    clearTimeout(this.creatorSearchTimeout);
+    if (value.trim().length >= 2) {
+      this.creatorSearchTimeout = setTimeout(() => {
+        this.movieService.searchPersons(value.trim()).subscribe(res => {
+          const creators = res.results.slice(0, 8);
+          this.creatorResults.set(creators);
+          this.showCreatorDropdown.set(creators.length > 0);
+        });
+      }, 300);
+    } else {
+      this.creatorResults.set([]);
+      this.showCreatorDropdown.set(false);
+    }
+  }
+
+  onCreatorFocus(): void {
+    if (this.creatorResults().length > 0 && !this.selectedCreator()) {
+      this.showCreatorDropdown.set(true);
+    }
+  }
+
+  selectCreatorAndApply(person: Person): void {
+    this.selectedCreator.set(person);
+    this.creatorQuery.set(person.name);
+    this.showCreatorDropdown.set(false);
+    this.creatorResults.set([]);
+    this.currentPage.set(1);
+    this.executeCreatorSearch();
+  }
+
+  clearCreatorAndApply(): void {
+    this.clearCreator();
+    this.currentPage.set(1);
+    if (this.searched()) {
+      this.executeDiscover(1);
+    }
+  }
+
+  private clearCreator(): void {
+    this.selectedCreator.set(null);
+    this.creatorQuery.set('');
+    this.creatorResults.set([]);
+    this.showCreatorDropdown.set(false);
+    this.allCreatorShows = [];
+  }
+
+  hideCreatorDropdown(): void {
+    setTimeout(() => this.showCreatorDropdown.set(false), 200);
+  }
+
+  private executeCreatorSearch(): void {
+    const creator = this.selectedCreator();
+    if (!creator) return;
+
+    this.activeRequest?.unsubscribe();
+    this.loading.set(true);
+    this.searched.set(true);
+    this.searchMode.set('creator');
+
+    this.activeRequest = this.movieService.getPersonTvShows(creator.id).subscribe({
+      next: res => {
+        // Merge cast + crew, deduplicate by id
+        const all = [...(res.cast || []), ...(res.crew || [])];
+        const seen = new Set<number>();
+        this.allCreatorShows = all.filter(s => {
+          if (seen.has(s.id)) return false;
+          seen.add(s.id);
+          return true;
+        });
+        this.applyCreatorFilters(1);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  private applyCreatorFilters(page: number): void {
+    let filtered = [...this.allCreatorShows];
+
+    // Genre filter
+    const genre = this.selectedGenre();
+    if (genre) filtered = filtered.filter(s => s.genre_ids?.includes(genre));
+
+    // Decade filter
+    const decade = this.selectedDecade();
+    if (decade) {
+      const y = parseInt(decade, 10);
+      if (y === 1900) {
+        filtered = filtered.filter(s => {
+          const date = s.first_air_date || s.release_date || '';
+          const year = parseInt(date.substring(0, 4), 10);
+          return year > 0 && year < 1960;
+        });
+      } else {
+        filtered = filtered.filter(s => {
+          const date = s.first_air_date || s.release_date || '';
+          const year = parseInt(date.substring(0, 4), 10);
+          return year >= y && year <= y + 9;
+        });
+      }
+    }
+
+    // Rating filter
+    const rating = this.selectedRating();
+    if (rating) filtered = filtered.filter(s => s.vote_average >= rating);
+
+    // Language filter
+    const lang = this.selectedLanguage();
+    if (lang) filtered = filtered.filter(s => s.original_language === lang);
+
+    // Sort
+    const sort = this.selectedSort();
+    if (sort === 'vote_average.desc') {
+      filtered.sort((a, b) => b.vote_average - a.vote_average);
+    } else if (sort === 'first_air_date.desc') {
+      filtered.sort((a, b) => {
+        const dateA = a.first_air_date || a.release_date || '';
+        const dateB = b.first_air_date || b.release_date || '';
+        return dateB.localeCompare(dateA);
+      });
+    } else {
+      filtered.sort((a, b) => b.popularity - a.popularity);
+    }
+
+    // Client-side pagination
+    const total = filtered.length;
+    const pages = Math.ceil(total / TvResultsComponent.PAGE_SIZE) || 1;
+    const safePage = Math.min(page, pages);
+    const start = (safePage - 1) * TvResultsComponent.PAGE_SIZE;
+    const pageResults = filtered.slice(start, start + TvResultsComponent.PAGE_SIZE);
+
+    this.tvResults.set(pageResults);
+    this.totalResults.set(total);
+    this.totalPages.set(pages);
+    this.currentPage.set(safePage);
+    this.searched.set(true);
+    this.searchMode.set('creator');
+  }
+
+  // =====================
   //  Pagination
   // =====================
 
@@ -401,6 +610,7 @@ export class TvResultsComponent implements OnInit {
     if (page < 1 || page > this.totalPages() || page === this.currentPage()) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (this.searchMode() === 'text') this.executeTextSearch(page);
+    else if (this.searchMode() === 'creator') this.applyCreatorFilters(page);
     else this.executeDiscover(page);
   }
 
@@ -443,6 +653,7 @@ export class TvResultsComponent implements OnInit {
     this.selectedLanguage.set(null);
     this.selectedRuntime.set(null);
     this.selectedDecade.set(null);
+    this.clearCreator();
     this.tvQuery.set('');
     this.searched.set(false);
     this.searchMode.set('none');

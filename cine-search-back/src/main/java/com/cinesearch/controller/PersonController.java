@@ -53,4 +53,11 @@ public class PersonController {
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getPersonMovies(id, lang));
     }
+
+    @GetMapping("/{id}/tv-shows")
+    public ResponseEntity<PersonCreditsResponse> getPersonTvShows(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "fr-FR") String lang) {
+        return ResponseEntity.ok(tmdbService.getPersonTvShows(id, lang));
+    }
 }

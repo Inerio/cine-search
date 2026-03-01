@@ -3,10 +3,12 @@
 export interface Movie {
   id: number;
   title: string;
+  name?: string; // TV shows use "name" instead of "title"
   overview: string;
   poster_path: string | null;
   backdrop_path: string | null;
   release_date: string;
+  first_air_date?: string; // TV shows use "first_air_date" instead of "release_date"
   vote_average: number;
   vote_count: number;
   popularity: number;

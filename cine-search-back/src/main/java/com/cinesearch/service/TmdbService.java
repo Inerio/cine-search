@@ -157,6 +157,18 @@ public class TmdbService {
                 .block();
     }
 
+    public PersonCreditsResponse getPersonTvShows(Long personId, String lang) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/person/{id}/tv_credits")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", lang)
+                        .build(personId))
+                .retrieve()
+                .bodyToMono(PersonCreditsResponse.class)
+                .block();
+    }
+
     /** Backward-compatible discover used by AiController. */
     public MovieListResponse discoverMovies(Integer genreId, Integer year, Double minRating, int page, String lang) {
         return discoverMoviesAdvanced(genreId, year, minRating, null, null, null, null, null, null, null, page, lang);
