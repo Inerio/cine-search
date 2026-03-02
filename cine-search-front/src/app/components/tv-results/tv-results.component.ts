@@ -4,9 +4,9 @@ import { Subscription } from 'rxjs';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
 import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
-import { Movie, Genre, Person } from '../../models/movie.model';
+import { Movie, Person } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
-import { SEARCH_DEBOUNCE_MS, DIRECTOR_SEARCH_DEBOUNCE_MS, DROPDOWN_HIDE_DELAY_MS, DROPDOWN_RESULTS_LIMIT, TV_RUNTIME } from '../../utils/constants';
+import { SEARCH_DEBOUNCE_MS, DIRECTOR_SEARCH_DEBOUNCE_MS, DROPDOWN_HIDE_DELAY_MS, DROPDOWN_RESULTS_LIMIT, TV_RUNTIME, TV_GENRES } from '../../utils/constants';
 
 type TvSearchMode = 'none' | 'text' | 'discover' | 'creator';
 
@@ -52,8 +52,8 @@ type TvSearchMode = 'none' | 'text' | 'discover' | 'creator';
       <div class="filters" [class.filters-collapsed]="!filtersOpen()">
         <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="filter-select">
           <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
-          @for (genre of genres(); track $index) {
-            <option [ngValue]="genre.id">{{ genre.name }}</option>
+          @for (genre of tvGenres; track genre.id) {
+            <option [ngValue]="genre.id">{{ t(genre.key) }}</option>
           }
         </select>
 
@@ -231,7 +231,7 @@ export class TvResultsComponent implements OnInit {
   // --- UI state ---
   tvQuery = signal('');
   tvResults = signal<Movie[]>([]);
-  genres = signal<Genre[]>([]);
+  readonly tvGenres = TV_GENRES;
   loading = signal(false);
   searched = signal(false);
   totalResults = signal(0);
@@ -297,22 +297,6 @@ export class TvResultsComponent implements OnInit {
       this.activeRequest?.unsubscribe();
     });
 
-    this.movieService.getTvGenres().subscribe(res => {
-      // TMDB combines several TV genres with " & " (e.g. "Sci-Fi & Fantasy",
-      // "Action & Adventure", "War & Politics"). Split them into separate
-      // entries so the dropdown stays compact and matches the Film tab.
-      const expanded: Genre[] = [];
-      for (const g of res.genres) {
-        const parts = g.name.split(' & ');
-        if (parts.length === 2) {
-          expanded.push({ id: g.id, name: parts[0] });
-          expanded.push({ id: g.id, name: parts[1] });
-        } else {
-          expanded.push(g);
-        }
-      }
-      this.genres.set(expanded);
-    });
     this.loadTrendingTv();
   }
 

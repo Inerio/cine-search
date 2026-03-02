@@ -9,9 +9,9 @@ import { DirectorResultsComponent } from '../director-results/director-results.c
 import { TvResultsComponent } from '../tv-results/tv-results.component';
 import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
-import { Movie, Genre, Person } from '../../models/movie.model';
+import { Movie, Person } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
-import { SEARCH_DEBOUNCE_MS, DIRECTOR_SEARCH_DEBOUNCE_MS, DROPDOWN_HIDE_DELAY_MS, DROPDOWN_RESULTS_LIMIT, MOVIE_RUNTIME } from '../../utils/constants';
+import { SEARCH_DEBOUNCE_MS, DIRECTOR_SEARCH_DEBOUNCE_MS, DROPDOWN_HIDE_DELAY_MS, DROPDOWN_RESULTS_LIMIT, MOVIE_RUNTIME, MOVIE_GENRES } from '../../utils/constants';
 
 type SearchTab = 'movie' | 'tv' | 'actor' | 'director' | 'scene';
 type SearchMode = 'none' | 'text' | 'discover';
@@ -67,8 +67,8 @@ type SearchMode = 'none' | 'text' | 'discover';
           <div class="filters" [class.filters-collapsed]="!filtersOpen()">
             <select [ngModel]="selectedGenre()" (ngModelChange)="onFilterChange('genre', $event)" class="filter-select">
               <option [ngValue]="null">{{ t('filter.allGenres') }}</option>
-              @for (genre of genres(); track genre.id) {
-                <option [ngValue]="genre.id">{{ genre.name }}</option>
+              @for (genre of movieGenres; track genre.id) {
+                <option [ngValue]="genre.id">{{ t(genre.key) }}</option>
               }
             </select>
 
@@ -269,7 +269,7 @@ export class SearchComponent implements OnInit {
   activeTab = signal<SearchTab>('movie');
   movieQuery = signal('');
   movieResults = signal<Movie[]>([]);
-  genres = signal<Genre[]>([]);
+  readonly movieGenres = MOVIE_GENRES;
   loading = signal(false);
   searched = signal(false);
   totalResults = signal(0);
@@ -335,8 +335,6 @@ export class SearchComponent implements OnInit {
       clearTimeout(this.directorSearchTimeout);
       this.activeRequest?.unsubscribe();
     });
-
-    this.movieService.getGenres().subscribe(res => this.genres.set(res.genres));
 
     this.route.queryParams.subscribe(params => {
       this.activeTab.set((params['tab'] as SearchTab) || 'movie');
