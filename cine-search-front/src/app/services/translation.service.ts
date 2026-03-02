@@ -25,7 +25,7 @@ export class TranslationService {
   /** Switches language and persists to localStorage. */
   setLang(lang: Lang): void {
     this.lang.set(lang);
-    try { localStorage.setItem(STORAGE_KEY, lang); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch { /* ignored */ }
   }
 
   /** Reads persisted language from localStorage. */
@@ -33,7 +33,7 @@ export class TranslationService {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === 'en' || stored === 'fr') return stored;
-    } catch {}
+    } catch { /* ignored */ }
     return 'fr';
   }
 }

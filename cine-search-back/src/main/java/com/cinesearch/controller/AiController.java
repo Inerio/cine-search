@@ -26,6 +26,28 @@ public class AiController {
 
     private static final Logger log = LoggerFactory.getLogger(AiController.class);
 
+    // Scoring weights for best-match selection
+    private static final int SCORE_KEYWORD_IN_TITLE = 15;
+    private static final int SCORE_SEARCH_QUERY_MATCH = 25;
+    private static final int SCORE_TITLE_EXACT = 30;
+    private static final int SCORE_TITLE_PARTIAL = 20;
+    private static final int SCORE_YEAR_EXACT = 10;
+    private static final int SCORE_YEAR_CLOSE = 5;
+    private static final int SCORE_GENRE_MATCH = 3;
+    private static final int SCORE_LANGUAGE_MATCH = 5;
+    private static final double SCORE_POPULARITY_DIVISOR = 10.0;
+    private static final int SCORE_POPULARITY_CAP = 5;
+
+    // Search cascade limits
+    private static final int MAX_KEYWORD_PAIRS = 20;
+    private static final int MAX_KEYWORD_TRIPLETS = 10;
+    private static final int SIMILAR_MOVIES_LIMIT = 12;
+    private static final int FALLBACK_TEXT_MAX_LENGTH = 100;
+    private static final int MIN_KEYWORD_LENGTH = 3;
+    private static final int MAX_INDIVIDUAL_KEYWORDS = 8;
+    private static final int CREDITS_RESULT_LIMIT = 20;
+    private static final int YEAR_TOLERANCE = 2;
+
     private final GroqService groqService;
     private final TmdbService tmdbService;
 
@@ -160,11 +182,7 @@ public class AiController {
                 && parsed.getActors() != null && !parsed.getActors().isEmpty()) {
             for (String actor : parsed.getActors()) {
                 log.info("Step 3: searching by actor '{}'", actor);
-                // Temporarily set the first actor for searchByActor
-                List<String> origActors = parsed.getActors();
-                parsed.setActors(List.of(actor));
-                bestMatch = searchByActor(parsed, lang, mediaType);
-                parsed.setActors(origActors);
+                bestMatch = searchByActor(actor, parsed, lang, mediaType);
                 if (bestMatch != null) {
                     if (results.isEmpty()) {
                         SearchResult r = searchByMediaType(bestMatch.title(), mediaType, lang);
@@ -212,8 +230,8 @@ public class AiController {
             if (bestMatch == null && kws.size() >= 2) {
                 int pairsChecked = 0;
                 outer:
-                for (int i = 0; i < kws.size() - 1 && pairsChecked < 20; i++) {
-                    for (int j = i + 1; j < kws.size() && pairsChecked < 20; j++) {
+                for (int i = 0; i < kws.size() - 1 && pairsChecked < MAX_KEYWORD_PAIRS; i++) {
+                    for (int j = i + 1; j < kws.size() && pairsChecked < MAX_KEYWORD_PAIRS; j++) {
                         pairsChecked++;
                         String pair = kws.get(i) + " " + kws.get(j);
                         log.info("  Step 5b: keyword pair '{}'", pair);
@@ -231,9 +249,9 @@ public class AiController {
             if (bestMatch == null && kws.size() >= 3) {
                 int tripletsChecked = 0;
                 outer2:
-                for (int i = 0; i < kws.size() - 2 && tripletsChecked < 10; i++) {
-                    for (int j = i + 1; j < kws.size() - 1 && tripletsChecked < 10; j++) {
-                        for (int k = j + 1; k < kws.size() && tripletsChecked < 10; k++) {
+                for (int i = 0; i < kws.size() - 2 && tripletsChecked < MAX_KEYWORD_TRIPLETS; i++) {
+                    for (int j = i + 1; j < kws.size() - 1 && tripletsChecked < MAX_KEYWORD_TRIPLETS; j++) {
+                        for (int k = j + 1; k < kws.size() && tripletsChecked < MAX_KEYWORD_TRIPLETS; k++) {
                             tripletsChecked++;
                             String triplet = kws.get(i) + " " + kws.get(j) + " " + kws.get(k);
                             log.info("  Step 5b2: keyword triplet '{}'", triplet);
@@ -270,8 +288,8 @@ public class AiController {
 
         // Step 7: Raw user text fallback (truncated for TMDB compatibility)
         if (results.isEmpty()) {
-            String truncated = userText.length() > 100
-                    ? userText.substring(0, 100).replaceAll("\\s+\\S*$", "")
+            String truncated = userText.length() > FALLBACK_TEXT_MAX_LENGTH
+                    ? userText.substring(0, FALLBACK_TEXT_MAX_LENGTH).replaceAll("\\s+\\S*$", "")
                     : userText;
             log.info("Step 7: fallback search with truncated userText ({}→{} chars)",
                     userText.length(), truncated.length());
@@ -308,7 +326,7 @@ public class AiController {
                 }
                 if (similar != null && similar.results() != null) {
                     similarMovies = tagMediaType(
-                            similar.results().stream().limit(12).toList(), similarType);
+                            similar.results().stream().limit(SIMILAR_MOVIES_LIMIT).toList(), similarType);
                 }
             } catch (Exception e) {
                 log.warn("Failed to fetch similar: {}", e.getMessage());
@@ -347,7 +365,9 @@ public class AiController {
                         if (p2 != null && p2.results() != null) {
                             all.addAll(tagMediaType(p2.results(), "tv"));
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log.debug("Failed to fetch TV search page 2 for '{}': {}", query, e.getMessage());
+                    }
                 }
                 return new SearchResult(all, p1.total_results() != null ? p1.total_results() : all.size());
             }
@@ -361,7 +381,9 @@ public class AiController {
                         if (p2 != null && p2.results() != null) {
                             all.addAll(tagMediaType(p2.results(), "movie"));
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log.debug("Failed to fetch movie search page 2 for '{}': {}", query, e.getMessage());
+                    }
                 }
                 return new SearchResult(all, p1.total_results() != null ? p1.total_results() : all.size());
             }
@@ -378,7 +400,9 @@ public class AiController {
                             all.addAll(p2.results().stream()
                                     .filter(m -> !"person".equals(m.media_type())).toList());
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log.debug("Failed to fetch multi search page 2 for '{}': {}", query, e.getMessage());
+                    }
                 }
                 return new SearchResult(all, all.size());
             }
@@ -455,37 +479,37 @@ public class AiController {
         for (MovieDto movie : results) {
             int score = 0;
 
-            // Title keyword matching (+15 per keyword found in movie title)
+            // Title keyword matching
             if (parsed.getKeywords() != null && movie.title() != null) {
                 String movieTitleLower = movie.title().toLowerCase();
                 for (String kw : parsed.getKeywords()) {
-                    if (kw.length() >= 3 && movieTitleLower.contains(kw.toLowerCase())) {
-                        score += 15;
+                    if (kw.length() >= MIN_KEYWORD_LENGTH && movieTitleLower.contains(kw.toLowerCase())) {
+                        score += SCORE_KEYWORD_IN_TITLE;
                     }
                 }
             }
 
-            // Search query exact title match (+25)
+            // Search query title match
             if (parsed.getSearchQueries() != null && movie.title() != null) {
                 String movieTitleLower = movie.title().toLowerCase();
                 for (String sq : parsed.getSearchQueries()) {
                     if (movieTitleLower.equals(sq.toLowerCase()) ||
                         movieTitleLower.contains(sq.toLowerCase()) ||
                         sq.toLowerCase().contains(movieTitleLower)) {
-                        score += 25;
+                        score += SCORE_SEARCH_QUERY_MATCH;
                         break;
                     }
                 }
             }
 
-            // Parsed title match (+30 if title matches closely)
+            // Parsed title match
             if (parsed.getTitle() != null && movie.title() != null) {
                 String parsedLower = parsed.getTitle().toLowerCase();
                 String movieLower = movie.title().toLowerCase();
                 if (movieLower.equals(parsedLower)) {
-                    score += 30;
+                    score += SCORE_TITLE_EXACT;
                 } else if (movieLower.contains(parsedLower) || parsedLower.contains(movieLower)) {
-                    score += 20;
+                    score += SCORE_TITLE_PARTIAL;
                 }
             }
 
@@ -493,32 +517,34 @@ public class AiController {
             if (parsed.getYear() != null && movie.release_date() != null) {
                 try {
                     int movieYear = Integer.parseInt(movie.release_date().substring(0, 4));
-                    if (movieYear == parsed.getYear()) score += 10;
-                    else if (Math.abs(movieYear - parsed.getYear()) <= 1) score += 5;
-                } catch (Exception ignored) {}
+                    if (movieYear == parsed.getYear()) score += SCORE_YEAR_EXACT;
+                    else if (Math.abs(movieYear - parsed.getYear()) <= 1) score += SCORE_YEAR_CLOSE;
+                } catch (NumberFormatException e) {
+                    log.debug("Could not parse year from release_date: {}", movie.release_date());
+                }
             }
 
-            // Genre overlap (+3 per matching genre)
+            // Genre overlap
             if (parsed.getGenres() != null && movie.genre_ids() != null) {
                 for (String genre : parsed.getGenres()) {
                     Integer genreId = genreMap.get(genre.toLowerCase());
                     if (genreId != null && movie.genre_ids().contains(genreId)) {
-                        score += 3;
+                        score += SCORE_GENRE_MATCH;
                     }
                 }
             }
 
-            // Language match (+5)
+            // Language match
             if (parsed.getLanguage() != null && movie.original_language() != null) {
                 String langCode = resolveLanguageCode(parsed.getLanguage());
                 if (langCode != null && langCode.equals(movie.original_language())) {
-                    score += 5;
+                    score += SCORE_LANGUAGE_MATCH;
                 }
             }
 
-            // Popularity tie-breaker (+0 to +5)
+            // Popularity tie-breaker
             if (movie.popularity() != null) {
-                score += (int) Math.min(movie.popularity() / 10, 5);
+                score += (int) Math.min(movie.popularity() / SCORE_POPULARITY_DIVISOR, SCORE_POPULARITY_CAP);
             }
 
             if (score > bestScore) {
@@ -533,9 +559,8 @@ public class AiController {
     // Actor-based search
     // ============================
 
-    private MovieDto searchByActor(AiMovieQuery parsed, String lang, String mediaType) {
+    private MovieDto searchByActor(String actorName, AiMovieQuery parsed, String lang, String mediaType) {
         try {
-            String actorName = parsed.getActors().getFirst();
             PersonSearchResponse personSearch = tmdbService.searchPersons(actorName, 1, lang);
             if (personSearch == null || personSearch.results() == null || personSearch.results().isEmpty()) {
                 return null;
@@ -570,8 +595,8 @@ public class AiController {
                         if (m.release_date() == null || m.release_date().length() < 4) return false;
                         try {
                             int year = Integer.parseInt(m.release_date().substring(0, 4));
-                            return Math.abs(year - parsed.getYear()) <= 2;
-                        } catch (Exception e) { return false; }
+                            return Math.abs(year - parsed.getYear()) <= YEAR_TOLERANCE;
+                        } catch (NumberFormatException e) { return false; }
                     })
                     .filter(m -> {
                         if (parsed.getGenres() == null || parsed.getGenres().isEmpty()) return true;
@@ -583,7 +608,7 @@ public class AiController {
                     })
                     .sorted(Comparator.comparingDouble((MovieDto m) ->
                             m.popularity() != null ? m.popularity() : 0).reversed())
-                    .limit(20)
+                    .limit(CREDITS_RESULT_LIMIT)
                     .toList();
 
             if (!filtered.isEmpty()) {
@@ -640,8 +665,8 @@ public class AiController {
                         if (m.release_date() == null || m.release_date().length() < 4) return false;
                         try {
                             int year = Integer.parseInt(m.release_date().substring(0, 4));
-                            return Math.abs(year - parsed.getYear()) <= 2;
-                        } catch (Exception e) { return false; }
+                            return Math.abs(year - parsed.getYear()) <= YEAR_TOLERANCE;
+                        } catch (NumberFormatException e) { return false; }
                     })
                     .filter(m -> {
                         if (parsed.getGenres() == null || parsed.getGenres().isEmpty()) return true;
@@ -653,7 +678,7 @@ public class AiController {
                     })
                     .sorted(Comparator.comparingDouble((MovieDto m) ->
                             m.popularity() != null ? m.popularity() : 0).reversed())
-                    .limit(20)
+                    .limit(CREDITS_RESULT_LIMIT)
                     .toList();
 
             if (!filtered.isEmpty()) {
@@ -672,9 +697,9 @@ public class AiController {
 
     private SearchResult searchByKeywords(String query, String mediaType, String lang) {
         List<String> keywords = Arrays.stream(query.split("\\s+"))
-                .filter(w -> w.length() > 2)
+                .filter(w -> w.length() >= MIN_KEYWORD_LENGTH)
                 .sorted((a, b) -> b.length() - a.length())
-                .limit(8)
+                .limit(MAX_INDIVIDUAL_KEYWORDS)
                 .toList();
 
         for (String keyword : keywords) {

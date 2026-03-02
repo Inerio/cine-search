@@ -5,10 +5,13 @@ import com.cinesearch.dto.MovieDetailDto;
 import com.cinesearch.dto.MovieListResponse;
 import com.cinesearch.dto.WatchProvidersResponse;
 import com.cinesearch.service.TmdbService;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /** REST controller exposing TMDB movie endpoints (trending, popular, search, detail, discover, genres). */
+@Validated
 @RestController
 @RequestMapping("/api/movies")
 public class MovieController {
@@ -21,14 +24,14 @@ public class MovieController {
 
     @GetMapping("/trending")
     public ResponseEntity<MovieListResponse> getTrending(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getTrending(page, lang));
     }
 
     @GetMapping("/popular")
     public ResponseEntity<MovieListResponse> getPopular(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getPopular(page, lang));
     }
@@ -36,7 +39,7 @@ public class MovieController {
     @GetMapping("/search")
     public ResponseEntity<MovieListResponse> searchMovies(
             @RequestParam String query,
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.searchMovies(query, page, lang));
     }
@@ -60,7 +63,7 @@ public class MovieController {
             @RequestParam(required = false) Long directorId,
             @RequestParam(required = false) String decadeStart,
             @RequestParam(required = false) String decadeEnd,
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.discoverMoviesAdvanced(
                 genreId, year, minRating, language, sortBy,

@@ -6,6 +6,7 @@ import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
 import { Movie, Genre, Person } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
+import { SEARCH_DEBOUNCE_MS, DIRECTOR_SEARCH_DEBOUNCE_MS, DROPDOWN_HIDE_DELAY_MS, DROPDOWN_RESULTS_LIMIT, TV_RUNTIME } from '../../utils/constants';
 
 type TvSearchMode = 'none' | 'text' | 'discover' | 'creator';
 
@@ -277,8 +278,8 @@ export class TvResultsComponent implements OnInit {
   });
 
   // --- Internal ---
-  private textSearchTimeout: any;
-  private creatorSearchTimeout: any;
+  private textSearchTimeout: ReturnType<typeof setTimeout> | undefined;
+  private creatorSearchTimeout: ReturnType<typeof setTimeout> | undefined;
   private activeRequest?: Subscription;
 
   private static readonly PAGE_SIZE = 20;
@@ -355,7 +356,7 @@ export class TvResultsComponent implements OnInit {
       return;
     }
 
-    this.textSearchTimeout = setTimeout(() => this.executeTextSearch(1), 400);
+    this.textSearchTimeout = setTimeout(() => this.executeTextSearch(1), SEARCH_DEBOUNCE_MS);
   }
 
   searchNow(): void {
@@ -389,6 +390,7 @@ export class TvResultsComponent implements OnInit {
   //  Filters (auto-apply)
   // =====================
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFilterChange(filter: string, value: any): void {
     switch (filter) {
       case 'genre': this.selectedGenre.set(value); break;
@@ -411,9 +413,9 @@ export class TvResultsComponent implements OnInit {
     const runtime = this.selectedRuntime();
     let runtimeGte: number | undefined;
     let runtimeLte: number | undefined;
-    if (runtime === 'short') runtimeLte = 30;
-    else if (runtime === 'medium') { runtimeGte = 30; runtimeLte = 60; }
-    else if (runtime === 'long') runtimeGte = 60;
+    if (runtime === 'short') runtimeLte = TV_RUNTIME.SHORT_MAX;
+    else if (runtime === 'medium') { runtimeGte = TV_RUNTIME.MEDIUM_MIN; runtimeLte = TV_RUNTIME.MEDIUM_MAX; }
+    else if (runtime === 'long') runtimeGte = TV_RUNTIME.LONG_MIN;
 
     const decade = this.selectedDecade();
     let decadeStart: string | undefined;
@@ -467,11 +469,11 @@ export class TvResultsComponent implements OnInit {
     if (value.trim().length >= 2) {
       this.creatorSearchTimeout = setTimeout(() => {
         this.movieService.searchPersons(value.trim()).subscribe(res => {
-          const creators = res.results.slice(0, 8);
+          const creators = res.results.slice(0, DROPDOWN_RESULTS_LIMIT);
           this.creatorResults.set(creators);
           this.showCreatorDropdown.set(creators.length > 0);
         });
-      }, 300);
+      }, DIRECTOR_SEARCH_DEBOUNCE_MS);
     } else {
       this.creatorResults.set([]);
       this.showCreatorDropdown.set(false);
@@ -510,7 +512,7 @@ export class TvResultsComponent implements OnInit {
   }
 
   hideCreatorDropdown(): void {
-    setTimeout(() => this.showCreatorDropdown.set(false), 200);
+    setTimeout(() => this.showCreatorDropdown.set(false), DROPDOWN_HIDE_DELAY_MS);
   }
 
   private executeCreatorSearch(): void {

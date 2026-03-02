@@ -3,6 +3,8 @@ package com.cinesearch.service;
 import com.cinesearch.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -19,6 +21,9 @@ import java.util.List;
  */
 @Service
 public class TmdbService {
+
+    private static final Logger log = LoggerFactory.getLogger(TmdbService.class);
+    private static final int MIN_VOTE_COUNT = 50;
 
     private final WebClient webClient;
     private final String apiKey;
@@ -210,7 +215,7 @@ public class TmdbService {
                     }
                     if (minRating != null) {
                         uriBuilder.queryParam("vote_average.gte", minRating);
-                        uriBuilder.queryParam("vote_count.gte", 50);
+                        uriBuilder.queryParam("vote_count.gte", MIN_VOTE_COUNT);
                     }
                     if (originalLanguage != null) {
                         uriBuilder.queryParam("with_original_language", originalLanguage);
@@ -266,7 +271,7 @@ public class TmdbService {
                     }
                     if (minRating != null) {
                         uriBuilder.queryParam("vote_average.gte", minRating);
-                        uriBuilder.queryParam("vote_count.gte", 50);
+                        uriBuilder.queryParam("vote_count.gte", MIN_VOTE_COUNT);
                     }
                     if (originalLanguage != null) {
                         uriBuilder.queryParam("with_original_language", originalLanguage);
@@ -294,12 +299,16 @@ public class TmdbService {
     /** Returns watch providers (streaming/rent/buy) for a movie in the given region. */
     @Cacheable(value = "watchProviders", key = "#movieId + '-' + #lang")
     public WatchProvidersResponse getWatchProviders(Long movieId, String lang) {
+        return fetchWatchProviders("/movie/{id}/watch/providers", movieId, lang);
+    }
+
+    private WatchProvidersResponse fetchWatchProviders(String path, Long id, String lang) {
         try {
             JsonNode root = webClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/movie/{id}/watch/providers")
+                            .path(path)
                             .queryParam("api_key", apiKey)
-                            .build(movieId))
+                            .build(id))
                     .retrieve()
                     .bodyToMono(JsonNode.class)
                     .block();
@@ -321,6 +330,7 @@ public class TmdbService {
             List<WatchProvidersResponse.ProviderDto> buy = parseProviders(regionNode.path("buy"));
             return new WatchProvidersResponse(link, flatrate, rent, buy);
         } catch (Exception e) {
+            log.warn("Failed to fetch watch providers for id={}: {}", id, e.getMessage());
             return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
         }
     }
@@ -331,6 +341,7 @@ public class TmdbService {
             return objectMapper.convertValue(node,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, WatchProvidersResponse.ProviderDto.class));
         } catch (Exception e) {
+            log.debug("Failed to parse watch providers node: {}", e.getMessage());
             return List.of();
         }
     }
@@ -418,7 +429,7 @@ public class TmdbService {
                     }
                     if (minRating != null) {
                         uriBuilder.queryParam("vote_average.gte", minRating);
-                        uriBuilder.queryParam("vote_count.gte", 50);
+                        uriBuilder.queryParam("vote_count.gte", MIN_VOTE_COUNT);
                     }
                     if (originalLanguage != null) {
                         uriBuilder.queryParam("with_original_language", originalLanguage);
@@ -455,7 +466,7 @@ public class TmdbService {
                     }
                     if (minRating != null) {
                         uriBuilder.queryParam("vote_average.gte", minRating);
-                        uriBuilder.queryParam("vote_count.gte", 50);
+                        uriBuilder.queryParam("vote_count.gte", MIN_VOTE_COUNT);
                     }
                     if (originalLanguage != null) {
                         uriBuilder.queryParam("with_original_language", originalLanguage);
@@ -495,35 +506,7 @@ public class TmdbService {
 
     @Cacheable(value = "tvWatchProviders", key = "#tvId + '-' + #lang")
     public WatchProvidersResponse getTvWatchProviders(Long tvId, String lang) {
-        try {
-            JsonNode root = webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/tv/{id}/watch/providers")
-                            .queryParam("api_key", apiKey)
-                            .build(tvId))
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            if (root == null) {
-                return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
-            }
-
-            String region = extractRegion(lang);
-            JsonNode regionNode = root.path("results").path(region);
-
-            if (regionNode.isMissingNode()) {
-                return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
-            }
-
-            String link = regionNode.has("link") ? regionNode.get("link").asText() : null;
-            List<WatchProvidersResponse.ProviderDto> flatrate = parseProviders(regionNode.path("flatrate"));
-            List<WatchProvidersResponse.ProviderDto> rent = parseProviders(regionNode.path("rent"));
-            List<WatchProvidersResponse.ProviderDto> buy = parseProviders(regionNode.path("buy"));
-            return new WatchProvidersResponse(link, flatrate, rent, buy);
-        } catch (Exception e) {
-            return new WatchProvidersResponse(null, List.of(), List.of(), List.of());
-        }
+        return fetchWatchProviders("/tv/{id}/watch/providers", tvId, lang);
     }
 
     // ─── PRIVATE HELPERS ─────────────────────────────────────────────────

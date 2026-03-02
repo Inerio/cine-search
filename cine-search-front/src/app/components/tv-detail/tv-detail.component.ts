@@ -6,6 +6,7 @@ import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
 import { TvDetail, CastMember, WatchProviders } from '../../models/movie.model';
+import { TOP_CAST_LIMIT } from '../../utils/constants';
 
 @Component({
   selector: 'app-tv-detail',
@@ -83,7 +84,7 @@ import { TvDetail, CastMember, WatchProviders } from '../../models/movie.model';
               <h3>{{ t('tvDetail.cast') }}</h3>
               <div class="cast-grid">
                 @for (member of topCast(); track member.id) {
-                  <div class="cast-card clickable" (click)="goToActor(member)">
+                  <div class="cast-card clickable" tabindex="0" (click)="goToActor(member)" (keydown.enter)="goToActor(member)">
                     <img
                       [src]="imageService.getProfileUrl(member.profile_path)"
                       [alt]="member.name"
@@ -245,7 +246,7 @@ export class TvDetailComponent implements OnInit {
     this.activeRequest = this.movieService.getTvDetail(id).subscribe(detail => {
       this.show.set(detail);
       if (detail.credits?.cast) {
-        this.topCast.set(detail.credits.cast.slice(0, 10));
+        this.topCast.set(detail.credits.cast.slice(0, TOP_CAST_LIMIT));
       }
       if (detail.episode_run_time && detail.episode_run_time.length > 0) {
         const avg = Math.round(detail.episode_run_time.reduce((a, b) => a + b, 0) / detail.episode_run_time.length);

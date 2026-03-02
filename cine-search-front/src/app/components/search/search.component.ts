@@ -11,6 +11,7 @@ import { MovieService } from '../../services/movie.service';
 import { TranslationService } from '../../services/translation.service';
 import { Movie, Genre, Person } from '../../models/movie.model';
 import { computeVisiblePages } from '../../utils/pagination';
+import { SEARCH_DEBOUNCE_MS, DIRECTOR_SEARCH_DEBOUNCE_MS, DROPDOWN_HIDE_DELAY_MS, DROPDOWN_RESULTS_LIMIT, MOVIE_RUNTIME } from '../../utils/constants';
 
 type SearchTab = 'movie' | 'tv' | 'actor' | 'director' | 'scene';
 type SearchMode = 'none' | 'text' | 'discover';
@@ -314,8 +315,8 @@ export class SearchComponent implements OnInit {
   });
 
   // --- Internal cleanup handles ---
-  private textSearchTimeout: any;
-  private directorSearchTimeout: any;
+  private textSearchTimeout: ReturnType<typeof setTimeout> | undefined;
+  private directorSearchTimeout: ReturnType<typeof setTimeout> | undefined;
   private activeRequest?: Subscription;
 
   t(key: string): string { return this.ts.t(key); }
@@ -405,7 +406,7 @@ export class SearchComponent implements OnInit {
       return;
     }
 
-    this.textSearchTimeout = setTimeout(() => this.executeTextSearch(1), 400);
+    this.textSearchTimeout = setTimeout(() => this.executeTextSearch(1), SEARCH_DEBOUNCE_MS);
   }
 
   searchNow(): void {
@@ -439,6 +440,7 @@ export class SearchComponent implements OnInit {
   //  Filters (auto-apply)
   // =====================
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFilterChange(filter: string, value: any): void {
     switch (filter) {
       case 'genre': this.selectedGenre.set(value); break;
@@ -456,9 +458,9 @@ export class SearchComponent implements OnInit {
     const runtime = this.selectedRuntime();
     let runtimeGte: number | undefined;
     let runtimeLte: number | undefined;
-    if (runtime === 'short') runtimeLte = 90;
-    else if (runtime === 'medium') { runtimeGte = 90; runtimeLte = 120; }
-    else if (runtime === 'long') runtimeGte = 120;
+    if (runtime === 'short') runtimeLte = MOVIE_RUNTIME.SHORT_MAX;
+    else if (runtime === 'medium') { runtimeGte = MOVIE_RUNTIME.MEDIUM_MIN; runtimeLte = MOVIE_RUNTIME.MEDIUM_MAX; }
+    else if (runtime === 'long') runtimeGte = MOVIE_RUNTIME.LONG_MIN;
 
     const decade = this.selectedDecade();
     let decadeStart: string | undefined;
@@ -577,11 +579,11 @@ export class SearchComponent implements OnInit {
         this.movieService.searchPersons(value.trim()).subscribe(res => {
           const directors = res.results
             .filter(p => p.known_for_department === 'Directing')
-            .slice(0, 8);
+            .slice(0, DROPDOWN_RESULTS_LIMIT);
           this.directorResults.set(directors);
           this.showDirectorDropdown.set(directors.length > 0);
         });
-      }, 300);
+      }, DIRECTOR_SEARCH_DEBOUNCE_MS);
     } else {
       this.directorResults.set([]);
       this.showDirectorDropdown.set(false);
@@ -617,6 +619,6 @@ export class SearchComponent implements OnInit {
   }
 
   hideDirectorDropdown(): void {
-    setTimeout(() => this.showDirectorDropdown.set(false), 200);
+    setTimeout(() => this.showDirectorDropdown.set(false), DROPDOWN_HIDE_DELAY_MS);
   }
 }

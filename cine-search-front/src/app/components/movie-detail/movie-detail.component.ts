@@ -6,6 +6,7 @@ import { MovieService } from '../../services/movie.service';
 import { ImageService } from '../../services/image.service';
 import { TranslationService } from '../../services/translation.service';
 import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../models/movie.model';
+import { TOP_CAST_LIMIT } from '../../utils/constants';
 
 @Component({
   selector: 'app-movie-detail',
@@ -67,7 +68,7 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
               <h3>{{ t('detail.cast') }}</h3>
               <div class="cast-grid">
                 @for (member of topCast(); track member.id) {
-                  <div class="cast-card clickable" (click)="goToActor(member)">
+                  <div class="cast-card clickable" tabindex="0" (click)="goToActor(member)" (keydown.enter)="goToActor(member)">
                     <img
                       [src]="imageService.getProfileUrl(member.profile_path)"
                       [alt]="member.name"
@@ -85,7 +86,7 @@ import { MovieDetail, CastMember, CrewMember, WatchProviders } from '../../model
           }
 
           @if (directorInfo()) {
-            <div class="director clickable" (click)="goToDirector()">
+            <div class="director clickable" tabindex="0" (click)="goToDirector()" (keydown.enter)="goToDirector()">
               <span class="director-label">{{ t('detail.directedBy') }}</span>
               <span class="director-name">{{ directorInfo()!.name }}</span>
             </div>
@@ -188,7 +189,7 @@ export class MovieDetailComponent implements OnInit {
     this.activeRequest = this.movieService.getMovieDetail(id).subscribe(detail => {
       this.movie.set(detail);
       if (detail.credits?.cast) {
-        this.topCast.set(detail.credits.cast.slice(0, 10));
+        this.topCast.set(detail.credits.cast.slice(0, TOP_CAST_LIMIT));
       }
       if (detail.credits?.crew) {
         const dir = detail.credits.crew.find(c => c.job === 'Director');

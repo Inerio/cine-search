@@ -4,10 +4,13 @@ import com.cinesearch.dto.PersonCreditsResponse;
 import com.cinesearch.dto.PersonDto;
 import com.cinesearch.dto.PersonSearchResponse;
 import com.cinesearch.service.TmdbService;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /** REST controller exposing TMDB person search and filmography endpoints. */
+@Validated
 @RestController
 @RequestMapping("/api/persons")
 public class PersonController {
@@ -20,14 +23,14 @@ public class PersonController {
 
     @GetMapping("/popular")
     public ResponseEntity<PersonSearchResponse> getPopularPersons(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getPopularPersons(page, lang));
     }
 
     @GetMapping("/trending")
     public ResponseEntity<PersonSearchResponse> getTrendingPersons(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getTrendingPersons(page, lang));
     }
@@ -35,7 +38,7 @@ public class PersonController {
     @GetMapping("/search")
     public ResponseEntity<PersonSearchResponse> searchPersons(
             @RequestParam String query,
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.searchPersons(query, page, lang));
     }

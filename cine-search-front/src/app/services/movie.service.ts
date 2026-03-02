@@ -195,7 +195,7 @@ export class MovieService {
   // --- AI ---
 
   /** Sends free-text query to backend Groq LLM for structured extraction + TMDB resolution. */
-  aiParse(text: string, mediaType: string = 'all'): Observable<AiSearchResponse> {
+  aiParse(text: string, mediaType = 'all'): Observable<AiSearchResponse> {
     return this.http.post<AiSearchResponse>(`${this.apiUrl}/ai/parse?lang=${this.lang}`, { text, mediaType });
   }
 }

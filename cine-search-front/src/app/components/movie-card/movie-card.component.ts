@@ -11,7 +11,7 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
   imports: [DecimalPipe, SlicePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <article class="movie-card" (click)="goToDetail()">
+    <article class="movie-card" tabindex="0" (click)="goToDetail()" (keydown.enter)="goToDetail()">
       <div class="poster-wrapper">
         <img
           [src]="imageService.getPosterUrl(movie().poster_path)"
