@@ -337,13 +337,33 @@ export class SearchComponent implements OnInit {
     });
 
     this.route.queryParams.subscribe(params => {
-      this.activeTab.set((params['tab'] as SearchTab) || 'movie');
+      const tab = (params['tab'] as SearchTab) || 'movie';
+      const q = params['q'] || '';
 
-      if (params['q']) {
-        this.movieQuery.set(params['q']);
-        if (this.activeTab() === 'movie') this.executeTextSearch(1);
-      } else if (this.activeTab() === 'movie') {
-        this.loadDefaultMovies();
+      this.activeTab.set(tab);
+
+      if (tab === 'movie') {
+        if (q) {
+          // Restore search only if query changed or component is fresh
+          if (q !== this.movieQuery() || !this.searched()) {
+            this.movieQuery.set(q);
+            this.executeTextSearch(1);
+          }
+        } else {
+          // No query — reset search state and load trending
+          if (this.movieQuery()) this.movieQuery.set('');
+          if (this.searched()) {
+            this.searched.set(false);
+            this.movieResults.set([]);
+            this.totalResults.set(0);
+            this.currentPage.set(1);
+            this.totalPages.set(0);
+            this.searchMode.set('none');
+          }
+          if (this.defaultMovies().length === 0 && !this.loading()) {
+            this.loadDefaultMovies();
+          }
+        }
       }
     });
   }
@@ -375,7 +395,8 @@ export class SearchComponent implements OnInit {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab },
-      queryParamsHandling: 'merge'
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
     if (tab === 'movie' && !this.searched() && this.defaultMovies().length === 0) {
       this.loadDefaultMovies();
@@ -399,6 +420,15 @@ export class SearchComponent implements OnInit {
         this.currentPage.set(1);
         this.totalPages.set(0);
         this.searchMode.set('none');
+
+        // Clear query from URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { q: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+
         if (this.defaultMovies().length === 0) this.loadDefaultMovies();
       }
       return;
@@ -422,6 +452,14 @@ export class SearchComponent implements OnInit {
     this.searched.set(true);
     this.searchMode.set('text');
     this.currentPage.set(page);
+
+    // Sync query to URL for back-navigation support
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: query },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
 
     this.activeRequest = this.movieService.searchMovies(query, page).subscribe({
       next: res => {
@@ -560,6 +598,15 @@ export class SearchComponent implements OnInit {
     this.currentPage.set(1);
     this.totalPages.set(0);
     this.trendingPage.set(1);
+
+    // Clear query from URL
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: null, tab: 'movie' },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
     this.loadDefaultMovies();
   }
 

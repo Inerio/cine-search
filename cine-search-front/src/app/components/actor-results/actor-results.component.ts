@@ -8,6 +8,7 @@ import {
   DestroyRef,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Location } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Observable, forkJoin, Subscription } from "rxjs";
 import { MovieCardComponent } from "../movie-card/movie-card.component";
@@ -261,7 +262,7 @@ const MAX_TMDB_PAGES = 100; // Safety cap: 2000 actors max
       >
         @if (selectedActor()) {
           <div class="selected-person">
-            <button class="back-btn" (click)="clearSelection()">
+            <button class="back-btn" (click)="goBack()">
               &#8592; {{ t("actor.back") }}
             </button>
             <div class="person-header">
@@ -393,6 +394,7 @@ export class ActorResultsComponent implements OnInit {
   private ts = inject(TranslationService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private destroyRef = inject(DestroyRef);
   imageService = inject(ImageService);
 
@@ -830,6 +832,10 @@ export class ActorResultsComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 
   clearSelection(): void {
