@@ -116,6 +116,7 @@ export const EN: Record<string, string> = {
   "scene.noMatch": "No exact match found.",
   "scene.tryAgain": "Try with an actor name, a partial title or more details!",
   "scene.bestMatch": "Best match",
+  "scene.suggestions": "Other suggestions",
   "scene.similarMovies": "Similar movies",
   "scene.otherResults": "Other results",
   "scene.confidenceHigh": "High confidence",

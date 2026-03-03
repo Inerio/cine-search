@@ -96,6 +96,7 @@ class AiControllerTest {
                         .content(objectMapper.writeValueAsString(new AiParseRequest("gibberish", null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.bestMatch").doesNotExist())
+                .andExpect(jsonPath("$.suggestions").isEmpty())
                 .andExpect(jsonPath("$.results").isEmpty())
                 .andExpect(jsonPath("$.totalResults").value(0));
     }
@@ -246,6 +247,42 @@ class AiControllerTest {
                 .andExpect(jsonPath("$.similarMovies[0].title").value("The Notebook"));
 
         verify(tmdbService).getSimilarMovies(597L, 1, "fr-FR");
+    }
+
+    @Test
+    @DisplayName("Suggestions contain top-scored results after bestMatch")
+    void parse_suggestions_rankedByScore() throws Exception {
+        AiMovieQuery parsed = new AiMovieQuery();
+        parsed.setIntent("search");
+        parsed.setTitle("Titanic");
+        parsed.setYear(1997);
+        parsed.setGenres(List.of("drama", "romance"));
+
+        // Multiple results so suggestions can be picked
+        MovieDto titanic2 = new MovieDto(2L, "Titanic II", "...",
+                null, null, "2010-08-24", 2.0, 500, 5.0, List.of(18, 28), "en", null, "movie");
+        MovieDto titanicTv = new MovieDto(3L, "Titanic: Blood and Steel", "...",
+                null, null, "2012-10-01", 6.5, 300, 8.0, List.of(18), "en", null, "movie");
+        MovieListResponse multiResults = new MovieListResponse(1,
+                List.of(TITANIC, titanic2, titanicTv), 1, 3);
+
+        when(groqService.parseUserQuery(anyString())).thenReturn(parsed);
+        when(tmdbService.searchMovies(eq("Titanic"), eq(1), anyString())).thenReturn(multiResults);
+        when(tmdbService.searchMovies(eq("Titanic"), eq(2), anyString())).thenReturn(EMPTY_RESULTS);
+        when(tmdbService.getSimilarMovies(eq(597L), eq(1), anyString())).thenReturn(EMPTY_RESULTS);
+
+        mockMvc.perform(post("/api/ai/parse")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AiParseRequest("titanic 1997", "movie"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bestMatch.title").value("Titanic"))
+                .andExpect(jsonPath("$.suggestions").isArray())
+                .andExpect(jsonPath("$.suggestions.length()").value(2))
+                // Suggestions must not contain bestMatch
+                .andExpect(jsonPath("$.suggestions[?(@.id == 597)]").isEmpty())
+                // Suggestions must not appear in results
+                .andExpect(jsonPath("$.results[?(@.id == 2)]").isEmpty())
+                .andExpect(jsonPath("$.results[?(@.id == 3)]").isEmpty());
     }
 
     @Test

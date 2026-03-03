@@ -117,6 +117,7 @@ export const FR: Record<string, string> = {
   "scene.tryAgain":
     "Essayez avec le nom d'un acteur, un titre partiel ou plus de détails !",
   "scene.bestMatch": "Film identifié",
+  "scene.suggestions": "Autres suggestions",
   "scene.similarMovies": "Films similaires",
   "scene.otherResults": "Autres résultats",
   "scene.confidenceHigh": "Confiance élevée",

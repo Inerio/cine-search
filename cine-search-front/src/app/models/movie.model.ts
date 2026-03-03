@@ -190,6 +190,7 @@ export interface AiMovieQuery {
 export interface AiSearchResponse {
   parsed: AiMovieQuery;
   bestMatch: Movie | null;
+  suggestions: Movie[];
   similarMovies: Movie[];
   results: Movie[];
   totalResults: number;

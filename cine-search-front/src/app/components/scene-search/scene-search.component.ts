@@ -94,6 +94,18 @@ import { Movie, AiMovieQuery } from '../../models/movie.model';
         </div>
       }
 
+      <!-- Suggestions -->
+      @if (suggestions().length > 0 && !loading()) {
+        <div class="suggestions-section">
+          <h3>{{ t('scene.suggestions') }}</h3>
+          <div class="movie-grid">
+            @for (movie of suggestions(); track movie.id) {
+              <app-movie-card [movie]="movie" [showMediaBadge]="true" />
+            }
+          </div>
+        </div>
+      }
+
       <!-- Similar Movies -->
       @if (similarMovies().length > 0 && !loading()) {
         <div class="similar-section">
@@ -140,6 +152,7 @@ export class SceneSearchComponent {
   mediaType = signal<string>('all');
   results = signal<Movie[]>([]);
   bestMatch = signal<Movie | null>(null);
+  suggestions = signal<Movie[]>([]);
   similarMovies = signal<Movie[]>([]);
   parsedQuery = signal<AiMovieQuery | null>(null);
   loading = signal(false);
@@ -163,12 +176,14 @@ export class SceneSearchComponent {
     this.searched.set(true);
     this.parsedQuery.set(null);
     this.bestMatch.set(null);
+    this.suggestions.set([]);
     this.similarMovies.set([]);
 
     this.movieService.aiParse(desc, this.mediaType()).subscribe({
       next: response => {
         this.parsedQuery.set(response.parsed);
         this.bestMatch.set(response.bestMatch);
+        this.suggestions.set(response.suggestions ?? []);
         this.similarMovies.set(response.similarMovies ?? []);
         this.results.set(response.results);
         this.loading.set(false);
@@ -176,6 +191,7 @@ export class SceneSearchComponent {
       error: () => {
         this.results.set([]);
         this.bestMatch.set(null);
+        this.suggestions.set([]);
         this.similarMovies.set([]);
         this.parsedQuery.set(null);
         this.loading.set(false);

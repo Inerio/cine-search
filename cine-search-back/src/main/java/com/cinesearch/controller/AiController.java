@@ -47,6 +47,7 @@ public class AiController {
     private static final int MAX_INDIVIDUAL_KEYWORDS = 8;
     private static final int CREDITS_RESULT_LIMIT = 20;
     private static final int YEAR_TOLERANCE = 2;
+    private static final int TOP_SUGGESTIONS_LIMIT = 4;
 
     private final GroqService groqService;
     private final TmdbService tmdbService;
@@ -70,7 +71,7 @@ public class AiController {
         // 2. Unknown intent → empty
         if ("unknown".equals(parsed.getIntent())) {
             log.info("Intent=unknown, returning empty results");
-            return ResponseEntity.ok(new AiSearchResponse(parsed, null, List.of(), List.of(), 0));
+            return ResponseEntity.ok(new AiSearchResponse(parsed, null, List.of(), List.of(), List.of(), 0));
         }
 
         // 3. Determine effective media type
@@ -88,7 +89,7 @@ public class AiController {
                 effectiveType);
 
         return ResponseEntity.ok(new AiSearchResponse(
-                parsed, result.bestMatch, result.similarMovies, result.results, result.total));
+                parsed, result.bestMatch, result.suggestions, result.similarMovies, result.results, result.total));
     }
 
     /**
@@ -110,7 +111,8 @@ public class AiController {
     // Enhanced resolution cascade
     // ============================
 
-    private record EnhancedResult(MovieDto bestMatch, List<MovieDto> similarMovies,
+    private record EnhancedResult(MovieDto bestMatch, List<MovieDto> suggestions,
+                                   List<MovieDto> similarMovies,
                                    List<MovieDto> results, int total) {}
 
     /**
@@ -310,6 +312,9 @@ public class AiController {
             bestMatch = tagSingleMediaType(bestMatch, bestType != null ? bestType : "movie");
         }
 
+        // Pick top suggestions from the same result pool (scored & ranked)
+        List<MovieDto> suggestions = pickSuggestions(results, bestMatch, parsed, mediaType);
+
         // === PHASE B: Get similar movies/shows ===
         List<MovieDto> similarMovies = List.of();
         if (bestMatch != null && bestMatch.id() != null) {
@@ -333,14 +338,16 @@ public class AiController {
             }
         }
 
-        // Remove bestMatch from results to avoid duplicate display
-        if (bestMatch != null) {
-            final Long bestId = bestMatch.id();
-            results = results.stream().filter(m -> !Objects.equals(m.id(), bestId)).toList();
+        // Remove bestMatch and suggestions from results to avoid duplicate display
+        if (bestMatch != null || !suggestions.isEmpty()) {
+            Set<Long> excludeIds = new HashSet<>();
+            if (bestMatch != null) excludeIds.add(bestMatch.id());
+            suggestions.stream().map(MovieDto::id).forEach(excludeIds::add);
+            results = results.stream().filter(m -> !excludeIds.contains(m.id())).toList();
         }
 
-        int total = results.size() + (bestMatch != null ? 1 : 0);
-        return new EnhancedResult(bestMatch, similarMovies, results, total);
+        int total = results.size() + suggestions.size() + (bestMatch != null ? 1 : 0);
+        return new EnhancedResult(bestMatch, suggestions, similarMovies, results, total);
     }
 
     // ============================
@@ -467,92 +474,105 @@ public class AiController {
     // Best match scoring
     // ============================
 
+    /**
+     * Scores a single movie against the parsed AI query.
+     * Higher score = better match.
+     */
+    private int scoreMovie(MovieDto movie, AiMovieQuery parsed, String mediaType) {
+        int score = 0;
+        Map<String, Integer> genreMap = "tv".equals(mediaType) ? TV_GENRE_MAP : GENRE_MAP;
+
+        // Title keyword matching
+        if (parsed.getKeywords() != null && movie.title() != null) {
+            String movieTitleLower = movie.title().toLowerCase();
+            for (String kw : parsed.getKeywords()) {
+                if (kw.length() >= MIN_KEYWORD_LENGTH && movieTitleLower.contains(kw.toLowerCase())) {
+                    score += SCORE_KEYWORD_IN_TITLE;
+                }
+            }
+        }
+
+        // Search query title match
+        if (parsed.getSearchQueries() != null && movie.title() != null) {
+            String movieTitleLower = movie.title().toLowerCase();
+            for (String sq : parsed.getSearchQueries()) {
+                if (movieTitleLower.equals(sq.toLowerCase()) ||
+                    movieTitleLower.contains(sq.toLowerCase()) ||
+                    sq.toLowerCase().contains(movieTitleLower)) {
+                    score += SCORE_SEARCH_QUERY_MATCH;
+                    break;
+                }
+            }
+        }
+
+        // Parsed title match
+        if (parsed.getTitle() != null && movie.title() != null) {
+            String parsedLower = parsed.getTitle().toLowerCase();
+            String movieLower = movie.title().toLowerCase();
+            if (movieLower.equals(parsedLower)) {
+                score += SCORE_TITLE_EXACT;
+            } else if (movieLower.contains(parsedLower) || parsedLower.contains(movieLower)) {
+                score += SCORE_TITLE_PARTIAL;
+            }
+        }
+
+        // Year match
+        if (parsed.getYear() != null && movie.release_date() != null && movie.release_date().length() >= 4) {
+            try {
+                int movieYear = Integer.parseInt(movie.release_date().substring(0, 4));
+                if (movieYear == parsed.getYear()) score += SCORE_YEAR_EXACT;
+                else if (Math.abs(movieYear - parsed.getYear()) <= 1) score += SCORE_YEAR_CLOSE;
+            } catch (NumberFormatException e) {
+                log.debug("Could not parse year from release_date: {}", movie.release_date());
+            }
+        }
+
+        // Genre overlap
+        if (parsed.getGenres() != null && movie.genre_ids() != null) {
+            for (String genre : parsed.getGenres()) {
+                Integer genreId = genreMap.get(genre.toLowerCase());
+                if (genreId != null && movie.genre_ids().contains(genreId)) {
+                    score += SCORE_GENRE_MATCH;
+                }
+            }
+        }
+
+        // Language match
+        if (parsed.getLanguage() != null && movie.original_language() != null) {
+            String langCode = resolveLanguageCode(parsed.getLanguage());
+            if (langCode != null && langCode.equals(movie.original_language())) {
+                score += SCORE_LANGUAGE_MATCH;
+            }
+        }
+
+        // Popularity tie-breaker
+        if (movie.popularity() != null) {
+            score += (int) Math.min(movie.popularity() / SCORE_POPULARITY_DIVISOR, SCORE_POPULARITY_CAP);
+        }
+
+        return score;
+    }
+
     private MovieDto pickBestMatch(List<MovieDto> results, AiMovieQuery parsed, String mediaType) {
         if (results.isEmpty()) return null;
         if (results.size() == 1) return results.getFirst();
+        return results.stream()
+                .max(Comparator.comparingInt(m -> scoreMovie(m, parsed, mediaType)))
+                .orElse(results.getFirst());
+    }
 
-        Map<String, Integer> genreMap = "tv".equals(mediaType) ? TV_GENRE_MAP : GENRE_MAP;
-
-        MovieDto best = results.getFirst();
-        int bestScore = -1;
-
-        for (MovieDto movie : results) {
-            int score = 0;
-
-            // Title keyword matching
-            if (parsed.getKeywords() != null && movie.title() != null) {
-                String movieTitleLower = movie.title().toLowerCase();
-                for (String kw : parsed.getKeywords()) {
-                    if (kw.length() >= MIN_KEYWORD_LENGTH && movieTitleLower.contains(kw.toLowerCase())) {
-                        score += SCORE_KEYWORD_IN_TITLE;
-                    }
-                }
-            }
-
-            // Search query title match
-            if (parsed.getSearchQueries() != null && movie.title() != null) {
-                String movieTitleLower = movie.title().toLowerCase();
-                for (String sq : parsed.getSearchQueries()) {
-                    if (movieTitleLower.equals(sq.toLowerCase()) ||
-                        movieTitleLower.contains(sq.toLowerCase()) ||
-                        sq.toLowerCase().contains(movieTitleLower)) {
-                        score += SCORE_SEARCH_QUERY_MATCH;
-                        break;
-                    }
-                }
-            }
-
-            // Parsed title match
-            if (parsed.getTitle() != null && movie.title() != null) {
-                String parsedLower = parsed.getTitle().toLowerCase();
-                String movieLower = movie.title().toLowerCase();
-                if (movieLower.equals(parsedLower)) {
-                    score += SCORE_TITLE_EXACT;
-                } else if (movieLower.contains(parsedLower) || parsedLower.contains(movieLower)) {
-                    score += SCORE_TITLE_PARTIAL;
-                }
-            }
-
-            // Year match
-            if (parsed.getYear() != null && movie.release_date() != null) {
-                try {
-                    int movieYear = Integer.parseInt(movie.release_date().substring(0, 4));
-                    if (movieYear == parsed.getYear()) score += SCORE_YEAR_EXACT;
-                    else if (Math.abs(movieYear - parsed.getYear()) <= 1) score += SCORE_YEAR_CLOSE;
-                } catch (NumberFormatException e) {
-                    log.debug("Could not parse year from release_date: {}", movie.release_date());
-                }
-            }
-
-            // Genre overlap
-            if (parsed.getGenres() != null && movie.genre_ids() != null) {
-                for (String genre : parsed.getGenres()) {
-                    Integer genreId = genreMap.get(genre.toLowerCase());
-                    if (genreId != null && movie.genre_ids().contains(genreId)) {
-                        score += SCORE_GENRE_MATCH;
-                    }
-                }
-            }
-
-            // Language match
-            if (parsed.getLanguage() != null && movie.original_language() != null) {
-                String langCode = resolveLanguageCode(parsed.getLanguage());
-                if (langCode != null && langCode.equals(movie.original_language())) {
-                    score += SCORE_LANGUAGE_MATCH;
-                }
-            }
-
-            // Popularity tie-breaker
-            if (movie.popularity() != null) {
-                score += (int) Math.min(movie.popularity() / SCORE_POPULARITY_DIVISOR, SCORE_POPULARITY_CAP);
-            }
-
-            if (score > bestScore) {
-                bestScore = score;
-                best = movie;
-            }
-        }
-        return best;
+    /**
+     * Picks the top N suggestions (excluding bestMatch) ranked by score.
+     */
+    private List<MovieDto> pickSuggestions(List<MovieDto> candidates, MovieDto bestMatch,
+                                           AiMovieQuery parsed, String mediaType) {
+        if (candidates == null || candidates.size() <= 1 || bestMatch == null) return List.of();
+        Long bestId = bestMatch.id();
+        return candidates.stream()
+                .filter(m -> !Objects.equals(m.id(), bestId))
+                .sorted(Comparator.comparingInt((MovieDto m) -> scoreMovie(m, parsed, mediaType)).reversed())
+                .limit(TOP_SUGGESTIONS_LIMIT)
+                .toList();
     }
 
     // ============================
