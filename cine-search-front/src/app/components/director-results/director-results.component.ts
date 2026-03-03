@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, forkJoin, Subscription } from 'rxjs';
 import { MovieCardComponent } from '../movie-card/movie-card.component';
@@ -170,7 +171,7 @@ const MAX_TMDB_PAGES = 500;     // Higher cap for directors since they are spars
 
         @if (selectedDirector()) {
           <div class="selected-person">
-            <button class="back-btn" (click)="clearSelection()">&#8592; {{ t('director.back') }}</button>
+            <button class="back-btn" (click)="goBack()">&#8592; {{ t('director.back') }}</button>
             <div class="person-header">
               <img
                 [src]="imageService.getProfileUrl(selectedDirector()!.profile_path, 'w342')"
@@ -262,6 +263,7 @@ export class DirectorResultsComponent implements OnInit {
   private ts = inject(TranslationService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private destroyRef = inject(DestroyRef);
   imageService = inject(ImageService);
 
@@ -640,6 +642,10 @@ export class DirectorResultsComponent implements OnInit {
       },
       error: () => this.loading.set(false)
     });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 
   clearSelection(): void {
