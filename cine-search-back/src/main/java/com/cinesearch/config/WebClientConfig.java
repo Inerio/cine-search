@@ -15,7 +15,7 @@ import java.time.Duration;
 public class WebClientConfig {
 
     @Bean
-    public WebClient tmdbWebClient(@Value("${tmdb.api.base-url}") String baseUrl) {
+    WebClient tmdbWebClient(@Value("${tmdb.api.base-url}") String baseUrl) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .responseTimeout(Duration.ofSeconds(10));
@@ -28,7 +28,7 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient groqWebClient(@Value("${groq.api.base-url}") String baseUrl) {
+    WebClient groqWebClient(@Value("${groq.api.base-url}") String baseUrl) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .responseTimeout(Duration.ofSeconds(10));
