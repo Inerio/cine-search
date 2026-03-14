@@ -16,12 +16,12 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 25329
           script: |
-            cd /opt/cine-search
+            cd /opt/apps/cine-search
             git fetch origin main
             git reset --hard origin/main
 
             # Write .env with secrets
-            cat > .env << 'ENVEOF'
+            cat > .env << ENVEOF
             TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}
             GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
             CORS_ALLOWED_ORIGINS=https://movieseeker.primary-key.ovh
@@ -31,6 +31,12 @@ jobs:
 
             # Rebuild and restart containers
             docker compose up -d --build --remove-orphans
+
+            # Copy frontend dist from Docker build to host nginx
+            docker compose cp frontend:/usr/share/nginx/html/. /var/www/movieseeker/
+
+            # Reload nginx to pick up any config changes
+            nginx -t && systemctl reload nginx
 
             # Clean up old Docker images
             docker image prune -f
