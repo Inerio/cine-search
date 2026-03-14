@@ -5,6 +5,7 @@ import com.cinesearch.dto.PersonDto;
 import com.cinesearch.dto.PersonSearchResponse;
 import com.cinesearch.service.TmdbService;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -45,21 +46,21 @@ public class PersonController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PersonDto> getPersonDetails(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getPersonDetails(id, lang));
     }
 
     @GetMapping("/{id}/movies")
     public ResponseEntity<PersonCreditsResponse> getPersonMovies(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getPersonMovies(id, lang));
     }
 
     @GetMapping("/{id}/tv-shows")
     public ResponseEntity<PersonCreditsResponse> getPersonTvShows(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getPersonTvShows(id, lang));
     }

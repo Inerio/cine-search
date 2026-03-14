@@ -6,6 +6,7 @@ import com.cinesearch.dto.MovieListResponse;
 import com.cinesearch.dto.WatchProvidersResponse;
 import com.cinesearch.service.TmdbService;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,7 @@ public class MovieController {
 
     @GetMapping("/{id}")
     public ResponseEntity<MovieDetailDto> getMovieDetail(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getMovieDetail(id, lang));
     }
@@ -79,7 +80,7 @@ public class MovieController {
 
     @GetMapping("/{id}/watch-providers")
     public ResponseEntity<WatchProvidersResponse> getWatchProviders(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getWatchProviders(id, lang));
     }
