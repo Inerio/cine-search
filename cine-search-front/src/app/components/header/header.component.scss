@@ -68,6 +68,26 @@
   }
 }
 
+.coffee-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #ffdd00;
+  }
+
+  .coffee-text {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 0 1rem;
@@ -80,6 +100,10 @@
   }
 
   .nav-links {
+    display: none;
+  }
+
+  .coffee-link .coffee-text {
     display: none;
   }
 }

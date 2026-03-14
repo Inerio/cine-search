@@ -4,6 +4,7 @@ export const FR: Record<string, string> = {
   "header.explore": "Explorer",
   "header.advanced": "Recherche avancée",
   "header.searchPlaceholder": "Rechercher un film, un acteur...",
+  "header.coffee": "Offrez-moi un café",
 
   // --- Home hero ---
   "home.heroTitle": "Retrouvez n'importe quel film en quelques secondes",
