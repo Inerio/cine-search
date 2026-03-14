@@ -27,6 +27,8 @@ jobs:
             CORS_ALLOWED_ORIGINS=https://movieseeker.primary-key.ovh
             ENVEOF
 
+            chmod 600 .env
+
             # Rebuild and restart containers
             docker compose up -d --build --remove-orphans
 

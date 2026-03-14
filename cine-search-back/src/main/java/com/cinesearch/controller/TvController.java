@@ -6,6 +6,7 @@ import com.cinesearch.dto.TvDetailDto;
 import com.cinesearch.dto.WatchProvidersResponse;
 import com.cinesearch.service.TmdbService;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +39,7 @@ public class TvController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TvDetailDto> getTvDetail(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getTvDetail(id, lang));
     }
@@ -68,7 +69,7 @@ public class TvController {
 
     @GetMapping("/{id}/watch-providers")
     public ResponseEntity<WatchProvidersResponse> getTvWatchProviders(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestParam(defaultValue = "fr-FR") String lang) {
         return ResponseEntity.ok(tmdbService.getTvWatchProviders(id, lang));
     }
